@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  macOS alternative to GitHub Actions. Use this only if you'd rather not put
+  the project on GitHub.
+
+  Caveat worth understanding: launchd will not wake a sleeping Mac. RunAtLoad
+  plus StartCalendarInterval means a missed run fires when the machine next
+  wakes, which is usually good enough, but you will silently miss days if the
+  laptop stays shut. GitHub Actions does not have this problem.
+
+  Install:
+    cp com.dipdector.daily.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.dipdector.daily.plist
+  Check:  launchctl list | grep dipdector
+  Remove: launchctl unload ~/Library/LaunchAgents/com.dipdector.daily.plist
+-->
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.dipdector.daily</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/ABSOLUTE/PATH/TO/dipdector/.venv/bin/python</string>
+    <string>-m</string><string>dipdector.daily</string>
+    <string>--provider</string><string>yfinance</string>
+    <string>--level</string><string>INVESTIGATE</string>
+  </array>
+
+  <key>WorkingDirectory</key><string>/ABSOLUTE/PATH/TO/dipdector</string>
+
+  <!-- 17:45 local, weekdays. Adjust for your timezone vs the US close. -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Weekday</key><integer>1</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Weekday</key><integer>2</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Weekday</key><integer>3</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Weekday</key><integer>4</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Weekday</key><integer>5</integer><key>Hour</key><integer>17</integer><key>Minute</key><integer>45</integer></dict>
+  </array>
+
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>/ABSOLUTE/PATH/TO/dipdector/state/daily.log</string>
+  <key>StandardErrorPath</key><string>/ABSOLUTE/PATH/TO/dipdector/state/daily.err</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- launchd does not read .env. Either set these here or have daily.py
+         load .env itself (python-dotenv). Prefer the latter — plists in
+         ~/Library are not encrypted. -->
+    <key>PATH</key><string>/usr/bin:/bin:/usr/local/bin</string>
+  </dict>
+</dict></plist>

@@ -1,0 +1,202 @@
+"""
+DipDector configuration.
+
+DEVLOG s.49 / s.44.9: thresholds must never be changed silently. Every tunable
+number lives in this file, carries a provenance note, and is stamped into any
+event record written to the store. If you change a value here, bump
+PARAMS_VERSION and record the reason in CHANGELOG_THRESHOLDS.
+
+DEVLOG s.50: these are STARTING parameters, not permanently fixed values. None
+of them have been validated by backtesting yet.
+"""
+
+from dataclasses import dataclass, field, asdict
+from typing import Dict, List
+
+PARAMS_VERSION = "0.3.0-unvalidated"
+
+CHANGELOG_THRESHOLDS = [
+    ("0.1.0-unvalidated", "Initial values taken verbatim from devlog s.6 and s.50. "
+                          "No backtesting performed. Do not treat as tuned."),
+    ("0.2.0-unvalidated", "Breadth changed from an absolute count (3 companies) to "
+                          "80% of the industry plus a floor of 4, on the grounds "
+                          "that 3 of 10 is ordinary noise. min_industry_members "
+                          "raised 4 -> 5. Added beta-adjusted excess return. "
+                          "Effect on event frequency measured, not assumed — see "
+                          "README."),
+    ("0.3.0-unvalidated", "Second comparator changed from a fixed Nasdaq-100 "
+                          "to a per-industry ETF resolved from a registry. "
+                          "S&P 500 remains the invariant primary. Activates "
+                          "the devlog s.6.4 benchmark-confirmation trigger, "
+                          "which was previously always skipped."),
+]
+
+
+@dataclass(frozen=True)
+class DetectionConfig:
+    """DEVLOG s.6 — recommended initial trigger. DEVLOG s.7 — timeframes."""
+
+    # Primary detection window, in trading days (devlog s.7: "primary initial
+    # signal should use 5 trading days").
+    primary_window: int = 5
+
+    # Context windows. Never used to trigger on their own.
+    context_windows: tuple = (1, 3, 10, 20, 60)
+
+    # s.6.1 — BREADTH. Superseded the original "at least 3 companies" rule.
+    #
+    # Three names is not an industry, it is a small sample. In a 10-member
+    # group, 3 declining is 30% — which is roughly what you would see on an
+    # ordinary Tuesday. The requirement is now proportional: a supermajority of
+    # the group must be falling before this counts as industry-wide.
+    #
+    # The absolute floor stays, because a percentage of a tiny group is also
+    # meaningless: 80% of 4 members is 3 stocks wearing a percentage as a
+    # disguise. Both conditions must hold.
+    min_breadth_pct: float = 0.80
+    min_declining_companies: int = 4
+
+    # s.6.1 — a company counts as "materially declining" at this return or worse
+    # over the primary window. The devlog does not pin this number; it is
+    # inferred so that "materially" is not left undefined in code.
+    material_decline: float = -0.03
+
+    # s.6.2 — industry median return over primary window.
+    industry_median_threshold: float = -0.08
+
+    # s.6.3 — number of companies underperforming S&P 500 by the relative
+    # threshold below.
+    # Same logic applied to relative underperformance: proportional, with a floor.
+    min_underperforming_pct: float = 0.60
+    min_underperforming_companies: int = 3
+    relative_underperformance_threshold: float = -0.05
+
+    # s.6.5 — the move must be abnormal vs the industry's own volatility.
+    # Expressed as a z-score of the industry's window return against its
+    # trailing distribution of same-length window returns.
+    min_abnormality_z: float = 1.5
+    volatility_lookback_days: int = 252
+
+    # s.6 — high-severity band, used for alert escalation, not as the trigger.
+    high_severity_decline: float = -0.10
+    extreme_decline: float = -0.15
+
+    # An industry needs at least this many members before breadth statistics
+    # mean anything. Raised from 4 alongside the percentage rule: in a 4-member
+    # group every breadth figure is a multiple of 25% and the supermajority test
+    # collapses into "all of them".
+    min_industry_members: int = 5
+
+    # Beta is estimated on this many trading days ENDING BEFORE the detection
+    # window, so the shock itself cannot inflate the estimate of how much
+    # market exposure the industry normally carries.
+    beta_lookback_days: int = 252
+
+    # s.5 — abnormal volume, as a z-score against trailing daily volume.
+    abnormal_volume_z: float = 2.0
+
+    # s.6.4 — the industry ETF must itself be meaningfully down. Set well below
+    # the industry median threshold because the ETF is usually broader and
+    # includes names outside this universe, so it moves less.
+    benchmark_confirm_threshold: float = -0.05
+
+
+@dataclass(frozen=True)
+class ShockScoreWeights:
+    """
+    DEVLOG s.10 — Industry Shock Score, 0-100, configurable, weighting "must be
+    validated through backtesting".
+
+    These weights are a starting guess. They are equal-ish by design so that no
+    single component silently dominates before we have evidence. Every component
+    is reported alongside the total so the score is decomposable (s.41).
+    """
+
+    magnitude: float = 0.22
+    breadth: float = 0.18
+    relative_weakness: float = 0.20
+    abnormality: float = 0.18
+    correlation: float = 0.10
+    volume: float = 0.07
+    benchmark_confirmation: float = 0.05
+
+    def as_dict(self) -> Dict[str, float]:
+        return asdict(self)
+
+    def validate(self) -> None:
+        total = sum(self.as_dict().values())
+        if abs(total - 1.0) > 1e-9:
+            raise ValueError(f"Shock score weights must sum to 1.0, got {total}")
+
+
+@dataclass(frozen=True)
+class AlertConfig:
+    """DEVLOG s.11 — WATCH / INVESTIGATE / MAJOR EVENT."""
+
+    watch_score: float = 35.0
+    investigate_score: float = 55.0
+    major_event_score: float = 75.0
+
+    # An INVESTIGATE or MAJOR alert additionally requires the hard trigger
+    # conditions in s.6 to be met, not just a score. The score alone cannot
+    # promote an industry past WATCH.
+    require_trigger_for_investigate: bool = True
+
+
+@dataclass(frozen=True)
+class RecoveryConfig:
+    """
+    DEVLOG s.18/s.19 — company resilience and Recovery Candidate Score.
+
+    PROTOTYPE LIMITATION: the full input list in s.18 needs a fundamentals feed
+    that is not wired yet. This prototype scores only the inputs it can compute
+    deterministically from price/volume, and reports coverage so the user can
+    see how much of the intended model is actually running.
+    """
+
+    implemented_inputs: tuple = (
+        "event_exposure",       # relative decline vs industry median
+        "drawdown_depth",       # distance from 52w high
+        "historical_resilience",  # behaviour in prior comparable drawdowns
+        "liquidity",            # dollar volume
+        "relative_stability",   # trailing volatility vs industry
+    )
+    pending_inputs: tuple = (
+        "balance_sheet_strength", "cash", "debt", "free_cash_flow",
+        "profitability", "operating_margin", "market_share",
+        "competitive_advantage", "geographic_diversification",
+        "revenue_diversification", "dividend_capacity", "valuation",
+        "earnings_revisions", "industry_position",
+    )
+
+    @property
+    def coverage(self) -> float:
+        n_done = len(self.implemented_inputs)
+        return n_done / (n_done + len(self.pending_inputs))
+
+
+@dataclass(frozen=True)
+class Config:
+    detection: DetectionConfig = field(default_factory=DetectionConfig)
+    weights: ShockScoreWeights = field(default_factory=ShockScoreWeights)
+    alerts: AlertConfig = field(default_factory=AlertConfig)
+    recovery: RecoveryConfig = field(default_factory=RecoveryConfig)
+
+    # DEVLOG s.5 — benchmarks.
+    #
+    # The S&P 500 is the PRIMARY comparator and never varies. It answers "is
+    # this an industry problem or is everything down", and it is the quality
+    # gate for the universe.
+    market_benchmark: str = "^GSPC"
+    # The SECOND comparator is resolved per industry from data/benchmarks.py —
+    # an airline group is compared to an airline ETF, not to the Nasdaq. There
+    # is deliberately no fixed secondary index here.
+
+    params_version: str = PARAMS_VERSION
+
+    def validate(self) -> None:
+        self.weights.validate()
+
+
+CONFIG = Config()
+CONFIG.validate()

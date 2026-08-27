@@ -1,0 +1,16 @@
+# Core
+pandas>=2.2
+numpy>=1.26
+duckdb>=1.0
+jinja2>=3.1
+requests>=2.31
+
+# Free price feed. UNOFFICIAL and scraped — pin it, and expect to bump this
+# when Yahoo changes something. This is the most likely thing to break.
+yfinance==0.2.65
+
+# Loads .env so launchd/cron don't need secrets in a plist
+python-dotenv>=1.0
+
+# Tests
+pytest>=8.0
