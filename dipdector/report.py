@@ -38,7 +38,12 @@ COMPONENT_COLORS = {
     "benchmark_confirmation": "#C9DCD1",
 }
 
-TEMPLATE = Template("""<!DOCTYPE html>
+# autoescape, because industry names carry ampersands ("Oil & Gas Equipment &
+# Services") and so does the prose around them ("S&P 500"). Without it those
+# reach the page as bare & and the markup is invalid. The two chart fields are
+# the only values that are deliberately markup; charts.py escapes its own text
+# before embedding it, so |safe is correct for them and nothing else.
+TEMPLATE = Template(autoescape=True, source="""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only">
@@ -243,7 +248,7 @@ pipeline. Nothing on this page is a real market observation.</div>
 
   {% if e.perf_chart %}
   <figure class="chart">
-    {{ e.perf_chart }}
+    {{ e.perf_chart|safe }}
     <figcaption>How the affected companies moved against the market over the
     last {{ e.chart_days }} trading days, rebased to zero. Shaded band is the
     {{ m.window }}-day detection window.</figcaption>
@@ -330,7 +335,7 @@ pipeline. Nothing on this page is a real market observation.</div>
       {% endfor %}
       </tbody></table>
       {% if e.dist_chart %}
-      <figure class="chart tight">{{ e.dist_chart }}
+      <figure class="chart tight">{{ e.dist_chart|safe }}
         <figcaption>Every member's return over the window. A tight cluster
         points to one shared cause; a long tail means several different stories
         are being averaged together.</figcaption></figure>
@@ -349,7 +354,7 @@ pipeline. Nothing on this page is a real market observation.</div>
       <tr><td class="tk">{{ c.ticker }}</td><td>{{ c.name }}</td>
         <td class="num dn">{{ '%+.1f'|format(c.returns[m.window]*100) }}%</td>
         <td class="num">{{ ('%+.1f'|format(c.rel_to_market*100)) ~ '%' if c.rel_to_market is not none else '—' }}</td>
-        <td class="num">{{ ('%+.1f'|format(c.volume_z)) ~ '&sigma;' if c.volume_z is not none else '—' }}</td>
+        <td class="num">{{ ('%+.1f'|format(c.volume_z)) ~ 'σ' if c.volume_z is not none else '—' }}</td>
         <td class="num">{{ ('%.0f'|format(c.dist_from_52w_high*100)) ~ '%' if c.dist_from_52w_high is not none else '—' }}</td>
       </tr>{% endfor %}
       </tbody></table>

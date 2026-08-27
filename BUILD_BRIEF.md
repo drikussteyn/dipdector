@@ -11,85 +11,89 @@ place orders, and it must never tell anyone to buy anything.
 
 ## State of the code
 
-Working, tested, 26 passing tests. Everything below runs today:
+Working, tested, 44 passing tests, and running against real market data.
 
 - detection engine, industry shock score, 5 trigger conditions
 - per-industry ETF benchmarks, beta-adjusted excess return
 - recovery candidate ranking (5 of ~18 intended inputs)
 - news retrieval + Claude cause classification
-- HTML report with charts
+- HTML report with charts, published as a linked page per event
+- static site builder + archive index (`publish.py`)
+- history backfill (`backfill.py`)
 - backtester: event study + portfolio simulator + controls
 - daily job with alert de-duplication and email delivery
+- GitHub Actions schedule, Pages hosting, state committed back
 
 **Verify this before you start, and again before you finish:**
 
 ```bash
-python -m pytest dipdector/tests -q                    # expect 26 passed
+python -m pytest dipdector/tests -q                    # expect 44 passed
 python -m dipdector.daily --provider fixture \
   --fixture dipdector/fixtures/synthetic_semis.csv \
   --as-of 2026-06-30 --to test@example.com --dry-run \
-  --news none --state /tmp/s.json --db /tmp/d.duckdb  # expect one alert printed
+  --news none --state /tmp/s.json --db /tmp/d.duckdb \
+  --publish-dir /tmp/site                              # expect one alert printed
 ```
 
-## What has never been run against real data
+## What real data showed
 
-Everything. Every number produced so far comes from synthetic fixtures. The
-first real run is the actual milestone here.
+The first real run happened. Everything below is measured, not assumed.
+
+- **yfinance did not break.** Column layout matches what `providers.py`
+  expects, all 35 tickers resolve at 100% coverage, a scan takes ~6 seconds.
+  The prediction that this would be the fragile part was wrong — so far.
+- **Firing rate: 3.3 events/year** over 2016–2026 (35 events in 10.7 years).
+  Inside the useful band, so the thresholds were NOT retuned and
+  `PARAMS_VERSION` is unchanged.
+- **The event study is positive**: 3m median +8.6% / 68% hit, 12m +15.5% /
+  76%, 91% recovered within two years.
+- **The score does not predict bounce size.** Bucketed 6m returns are flat and
+  non-monotonic. Do not treat a 100 as a better opportunity than a 60.
+- **Median further fall after entry is −19%**, worst −65%.
+- **The portfolio simulator is noise** — its own non-monotonicity warning
+  fires, 12 of 56 events were taken, and it loses to buy-and-hold on
+  risk-adjusted terms. Read the event study, not the CAGR.
+
+Three bugs were found and fixed that only ever surface on a day an alert
+fires, which is why 26 tests passed over a broken production path:
+
+1. `news/free.py` compared a naive `as_of` against aware article timestamps →
+   `TypeError` on every alerting day. Both providers now normalise via
+   `news/engine.py::to_utc`.
+2. `notify/email.py` read `SMTP_USER`/`SMTP_FROM` while the docs and workflow
+   set `SMTP_USERNAME`/`SMTP_SENDER` → SMTP could never authenticate.
+3. `classify_event` let an API failure propagate and kill the run. It now
+   degrades to the explicit stub.
+
+Plus two silent traps: `EMAIL_PROVIDER` was documented but read by nothing
+(so "start on console" was unsafe), and the workflow treated exit code 10
+("alerts sent") as a job failure.
 
 ## Your tasks, in order
 
-### 1. First real run (do this before anything else)
+Tasks 1–4 of the original brief are done: the first real run, the firing-rate
+measurement, delivery, and scheduling. What remains:
 
-```bash
-pip install -r requirements.txt
-python -m dipdector.daily --provider yfinance --as-of <recent weekday> \
-  --to you@example.com --dry-run --level WATCH
-```
+### 1. Deploy it
 
-Expect breakage. yfinance is scraped, not an official API: column layouts shift
-between versions, tickers go missing, rate limits bite. Fix what breaks in
-`data/providers.py::YFinanceProvider` only. Do not paper over missing data by
-substituting values.
+See `README.md`. Push to GitHub, enable Pages on `main /docs`, add the
+secrets, run the workflow by hand once. Nothing here needs code changes.
 
-Then report back to the owner:
-- how many industries fired, at what level
-- whether any ticker in `data/universe.py` failed to resolve
-- how long the run took
+### 2. Watch the first month
 
-### 2. Measure the firing rate
+The thresholds are validated against history, not against the live feed. Check
+that the firing rate in practice resembles 3.3/year and that yfinance keeps
+working — it is unofficial and will eventually break.
 
-The thresholds have never been validated. Before trusting any alert, find out
-how often this thing actually fires on real data:
-
-```bash
-python -m dipdector.backtest.run --provider yfinance \
-  --start 2016-01-01 --end <today> --step 5 --controls
-```
-
-Under ~1 event/year the filter is too tight to learn from. Over ~15 it has
-become a screener. Report the number; do not silently retune thresholds to hit
-a target. If you do change one, bump `PARAMS_VERSION` and add a line to
-`CHANGELOG_THRESHOLDS`.
-
-### 3. Wire delivery
-
-`.env.example` → `.env`. Start with `EMAIL_PROVIDER=console`, confirm the text
-looks right, then switch to `smtp` with a **Gmail app password** (not the
-account password). Send one real email before automating anything.
-
-### 4. Schedule it
-
-`deploy/.github/workflows/daily.yml` is preferred — a laptop cron job only fires
-when the lid is open. The state file must persist between runs or the owner gets
-emailed about the same event every day; the workflow commits it back to the
-repo for exactly this reason.
-
-### 5. Then, and only then, features
+### 3. Then, and only then, features
 
 Ask the owner before starting any of these:
 - point-in-time index membership (removes survivorship bias — highest value)
 - fundamentals feed (unlocks 14 of 18 recovery inputs)
-- expanding `data/universe.py` beyond 6 sub-industries
+- expanding `data/universe.py` beyond 6 sub-industries. Note that
+  **Semiconductor Materials & Equipment currently has 4 members and
+  `min_industry_members` is 5**, so it is silently never scored. Either add a
+  fifth name or drop it.
 
 ## Rules that must not be broken
 

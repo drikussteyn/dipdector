@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>DipDector — 2018-10-26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light only;
+  --paper:#F7F7F3; --panel:#ECECE6; --ink:#16181B; --muted:#565B62;
+  --rule:#D8D8D1; --rule-soft:#E4E4DD;
+  --judge-bg:#EAE7F0; --judge-ink:#2E2A3D; --judge-mark:#584C7A;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--paper)}
+body{margin:0;background:var(--paper)!important;color:var(--ink)!important;
+  font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:660px;margin:0 auto;padding:44px 22px 100px;background:var(--paper)}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+/* header */
+header.top{margin-bottom:52px}
+.brand{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted)}
+.status{font-family:'Newsreader',Georgia,serif;font-size:23px;font-weight:400;
+  line-height:1.35;margin:12px 0 0}
+
+/* event */
+.event{padding-top:34px;border-top:1px solid var(--rule);margin-top:44px;
+  background:var(--paper)}
+.event:first-of-type{border-top:none;margin-top:0;padding-top:0}
+.tag{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:500}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+h2.head{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:33px;
+  line-height:1.22;letter-spacing:-.012em;margin:14px 0 0}
+p.sub{color:var(--muted);font-size:16px;margin:12px 0 0;max-width:52ch}
+
+/* the suggestion — the one thing that should catch the eye */
+.suggest{margin:28px 0 0;padding:20px 22px;background:var(--panel);
+  border-left:3px solid var(--accent)}
+.suggest .act{font-family:'Newsreader',Georgia,serif;font-size:21px;
+  color:var(--accent);margin:0 0 8px;line-height:1.3}
+.suggest p{margin:0;font-size:15px;color:var(--ink);max-width:54ch}
+
+/* three figures */
+.figs{display:flex;flex-wrap:wrap;gap:30px;margin:30px 0 6px}
+.fig{min-width:104px}
+.fig b{display:block;font-family:'IBM Plex Mono',monospace;font-size:25px;
+  font-weight:500;letter-spacing:-.02em;line-height:1.1}
+.fig span{display:block;font-size:12.5px;color:var(--muted);margin-top:5px;
+  max-width:15ch;line-height:1.4}
+
+/* disclosure panels */
+details{border-top:1px solid var(--rule-soft);background:var(--paper)}
+.body{background:var(--paper)}
+details:last-of-type{border-bottom:1px solid var(--rule-soft)}
+summary{cursor:pointer;list-style:none;padding:15px 2px;font-size:15px;
+  display:flex;align-items:center;gap:11px;color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+summary:hover{color:var(--accent)}
+.chev{flex:0 0 9px;height:9px;border-right:1.5px solid var(--muted);
+  border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);
+  transition:transform .18s ease;margin-left:2px}
+details[open] .chev{transform:rotate(45deg)}
+summary .n{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--muted)}
+.body{padding:2px 2px 26px;font-size:14.5px}
+.panels{margin-top:24px}
+figure.chart{margin:26px 0 4px;padding:0}
+figure.chart.tight{margin:22px 0 0}
+figure.chart figcaption{font-size:12.5px;color:var(--muted);margin-top:9px;
+  line-height:1.5;max-width:56ch}
+table.stats{margin-bottom:4px}
+table.stats td{vertical-align:top;padding:10px 8px 10px 0}
+table.stats td.k{font-weight:600;font-size:13.5px;white-space:nowrap}
+table.stats td.k .f{display:block;font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;color:var(--muted);font-weight:400;margin-top:3px}
+table.stats td.v{font-family:'IBM Plex Mono',monospace;font-size:15px;
+  text-align:right;white-space:nowrap;padding-right:14px}
+table.stats td.m{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* score bar, now inside a panel */
+.bar{display:flex;height:26px;border:1px solid var(--rule);margin:4px 0 12px}
+.seg{min-width:0}
+.unearned{flex:1;background-image:repeating-linear-gradient(135deg,
+  transparent 0 5px,var(--rule) 5px 6px)}
+.comp{display:flex;align-items:baseline;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--rule-soft)}
+.comp .sw{flex:0 0 9px;height:9px;margin-top:5px;border-radius:2px}
+.comp .txt{flex:1}
+.comp .nm{font-size:13.5px;font-weight:600}
+.comp .ex{color:var(--muted);font-size:13px;margin-top:2px}
+.comp .pts{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted)}
+
+.chk{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--rule-soft);
+  align-items:baseline}
+.chk .m{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;
+  flex:0 0 40px;font-weight:500}
+.chk.ok .m{color:#1E5C4F}.chk.no .m{color:#9E2B21}
+.chk .d{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+  text-align:left;font-weight:600;padding:0 6px 7px;border-bottom:1px solid var(--rule)}
+td{padding:8px 6px;border-bottom:1px solid var(--rule-soft)}
+td.num,th.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px}
+th.num{font-family:inherit}
+.tk{font-family:'IBM Plex Mono',monospace;font-weight:500}
+.dn{color:#9E2B21}
+
+/* judgement — different surface, always labelled */
+.judge{background:var(--judge-bg);color:var(--judge-ink);padding:20px 22px;
+  border-left:3px solid var(--judge-mark);margin:4px 0 12px}
+.judge .mark{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--judge-mark);margin-bottom:10px}
+.judge h3{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:20px;
+  margin:0 0 8px;line-height:1.3}
+.judge p{margin:0 0 12px;font-size:14.5px}
+.judge .chain{font-family:'IBM Plex Mono',monospace;font-size:13px;margin:0 0 14px}
+.jrow{display:flex;flex-wrap:wrap;gap:24px;margin-top:6px}
+.jrow div{font-family:'IBM Plex Mono',monospace}
+.jrow b{display:block;font-size:19px;font-weight:500}
+.jrow span{font-family:inherit;font-size:11.5px;letter-spacing:.05em;opacity:.85}
+.judge.empty{background:var(--panel);border-left-color:var(--rule);color:var(--muted)}
+.judge.empty .mark{color:var(--muted)}
+
+.cand{padding:13px 0;border-bottom:1px solid var(--rule-soft)}
+.cand .r{display:flex;align-items:baseline;gap:11px}
+.cand .r .i{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--muted);
+  flex:0 0 16px}
+.cand .r .t{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:15px}
+.cand .r .nm{color:var(--muted);font-size:14px;flex:1}
+.cand .r .s{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:500}
+.cand .why{margin:5px 0 0 27px;font-size:13.5px;color:var(--muted)}
+.cand ul{margin:7px 0 0 27px;padding:0 0 0 15px;font-size:13px;color:var(--muted)}
+.cand li{margin-bottom:4px}
+.cand .cav{margin:6px 0 0 27px;font-size:13px;color:#9E2B21}
+
+ul.plain{margin:0;padding-left:17px;font-size:14px;color:var(--muted)}
+ul.plain li{margin-bottom:7px}
+.note{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+
+.banner{margin:0 0 34px;padding:11px 14px;border:1px solid #9E2B21;color:#9E2B21;
+  font-size:13.5px}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--rule);
+  font-size:12.5px;color:var(--muted);line-height:1.75}
+@media (max-width:520px){
+  .wrap{padding:30px 16px 70px}h2.head{font-size:26px}.status{font-size:19px}
+  .figs{gap:22px}.fig b{font-size:21px}
+}
+@media (prefers-color-scheme:dark){
+  html,body,.wrap,.event,details,.body,summary{
+    background:var(--paper)!important;color:var(--ink)!important}
+  h2.head,.status{color:var(--ink)!important}
+  p.sub,.fig span,.note,summary .n,.comp .ex,.chk .d,ul.plain,footer,
+  .cand .why,.cand ul,.cand .r .nm,td,th{color:var(--muted)!important}
+  td,th,.comp .nm,.fig b{color:var(--ink)!important}
+  .judge{background:var(--judge-bg)!important;color:var(--judge-ink)!important}
+  .judge p,.judge h3,.judge .chain,.jrow{color:var(--judge-ink)!important}
+  .suggest{background:var(--panel)!important}
+  .suggest p{color:var(--ink)!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+
+<header class="top">
+  <div class="brand">DipDector &middot; 2018-10-26</div>
+  <p class="status">Oil &amp; Gas Equipment &amp; Services moved far enough together to be worth a look.</p>
+</header>
+
+
+
+
+
+<section class="event" style="--accent:#86580A">
+
+  <span class="tag" style="color:#86580A">
+    <span class="dot" style="background:#86580A"></span>Investigate</span>
+
+  <h2 class="head">Oil &amp; Gas Equipment &amp; Services fell 9.5% in 5 trading days</h2>
+  <p class="sub">Over the same window the S&amp;P 500 fell 3.9%. All 5 companies in the group declined together. This is a larger move than this group usually makes.</p>
+
+  <div class="suggest">
+    <p class="act">Find out what caused this</p>
+    <p>The group is falling together and falling behind the market, which points to a shared cause rather than coincidence. The next step is to identify the cause and judge whether it looks temporary.</p>
+  </div>
+
+  <div class="figs">
+    
+    <div class="fig" title="The middle company in the group. Half fell more, half fell less.">
+      <b style="color:#9E2B21">-9.5%</b>
+      <span>typical fall over 5 days</span></div>
+    
+    <div class="fig" title="How widespread the decline is. One or two weak names would not count as an industry event.">
+      <b>5/5</b>
+      <span>companies falling</span></div>
+    
+    <div class="fig" title="The gap between this group and the wider market. This is what separates an industry problem from a bad week for everything.">
+      <b style="color:#9E2B21">-5.6%</b>
+      <span>behind the S&amp;P 500</span></div>
+    
+  </div>
+
+  
+  <figure class="chart">
+    <svg viewBox="0 0 616 230" width="100%" role="img" aria-label="Cumulative return of the affected companies against the market over the last 60 trading days" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="456.3" y="14" width="41.7" height="190" fill="#E8E2DF"/><text x="460.3" y="25" font-size="9.5" fill="#565B62" font-family="IBM Plex Mono,monospace">5-day window</text><line x1="6" y1="53.0" x2="498" y2="53.0" stroke="#16181B" stroke-width="1" /><text x="504" y="56.5" font-size="10" fill="#565B62" font-family="IBM Plex Mono,monospace">+0%</text><line x1="6" y1="14.0" x2="498" y2="14.0" stroke="#D8D8D1" stroke-width="0.7" stroke-dasharray='2 3'/><text x="504" y="17.5" font-size="10" fill="#565B62" font-family="IBM Plex Mono,monospace">+5%</text><line x1="6" y1="204.0" x2="498" y2="204.0" stroke="#D8D8D1" stroke-width="0.7" stroke-dasharray='2 3'/><text x="504" y="207.5" font-size="10" fill="#565B62" font-family="IBM Plex Mono,monospace">-21%</text><polyline points="6.0,53.0 14.3,52.3 22.7,46.9 31.0,51.0 39.4,62.6 47.7,58.7 56.0,73.0 64.4,75.7 72.7,104.4 81.1,103.3 89.4,103.4 97.7,93.0 106.1,81.4 114.4,73.9 122.7,78.0 131.1,73.4 139.4,65.5 147.8,67.2 156.1,60.0 164.4,62.1 172.8,71.6 181.1,80.6 189.5,98.2 197.8,111.8 206.1,112.9 214.5,111.8 222.8,100.6 231.2,93.8 239.5,95.7 247.8,95.5 256.2,97.2 264.5,86.8 272.8,80.6 281.2,84.0 289.5,81.2 297.9,75.5 306.2,66.2 314.5,72.2 322.9,77.5 331.2,78.3 339.6,76.0 347.9,75.8 356.2,73.4 364.6,71.7 372.9,77.3 381.3,77.9 389.6,67.3 397.9,91.1 406.3,109.0 414.6,106.9 422.9,105.7 431.3,101.5 439.6,109.3 448.0,123.0 456.3,128.2 464.6,138.9 473.0,157.5 481.3,183.8 489.7,181.2 498.0,188.2" fill="none" stroke="#9E2B21" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="498.0" cy="188.2" r="2.6" fill="#9E2B21"/><polyline points="6.0,53.0 14.3,50.4 22.7,48.4 31.0,48.6 39.4,49.6 47.7,54.8 56.0,57.8 64.4,53.1 72.7,58.7 81.1,52.9 89.4,50.5 97.7,48.7 106.1,47.2 114.4,47.5 122.7,48.8 131.1,44.2 139.4,38.6 147.8,38.4 156.1,34.1 164.4,37.4 172.8,37.3 181.1,38.6 189.5,40.6 197.8,43.4 206.1,45.0 214.5,43.6 222.8,40.8 231.2,40.6 239.5,36.6 247.8,36.4 256.2,40.6 264.5,36.6 272.8,35.7 281.2,29.8 289.5,30.1 297.9,32.8 306.2,33.7 314.5,36.2 322.9,34.1 331.2,34.1 339.6,31.4 347.9,31.7 356.2,31.2 364.6,37.3 372.9,41.4 381.3,41.7 389.6,42.8 397.9,67.0 406.3,81.8 414.6,71.8 422.9,76.0 431.3,60.8 439.6,61.0 448.0,71.4 456.3,71.6 464.6,74.7 473.0,78.6 481.3,100.3 489.7,87.6 498.0,99.6" fill="none" stroke="#3B4A5C" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="498.0" cy="99.6" r="2" fill="#3B4A5C"/><polyline points="6.0,53.0 14.3,53.3 22.7,46.7 31.0,48.2 39.4,61.9 47.7,53.6 56.0,72.5 64.4,73.0 72.7,104.5 81.1,101.3 89.4,95.3 97.7,86.5 106.1,74.7 114.4,64.2 122.7,69.3 131.1,64.2 139.4,59.6 147.8,65.9 156.1,60.2 164.4,68.7 172.8,75.6 181.1,85.9 189.5,103.0 197.8,113.6 206.1,118.7 214.5,117.0 222.8,103.3 231.2,89.9 239.5,93.9 247.8,89.9 256.2,96.2 264.5,84.5 272.8,75.3 281.2,71.6 289.5,66.2 297.9,58.7 306.2,48.5 314.5,61.6 322.9,61.0 331.2,61.9 339.6,54.2 347.9,53.0 356.2,45.0 364.6,50.5 372.9,49.3 381.3,46.7 389.6,38.2 397.9,74.5 406.3,92.2 414.6,89.3 422.9,84.7 431.3,80.7 439.6,90.7 448.0,112.7 456.3,117.3 464.6,129.3 473.0,153.6 481.3,185.0 489.7,176.8 498.0,177.6" fill="none" stroke="#8A6B3D" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="498.0" cy="177.6" r="2" fill="#8A6B3D"/><rect x="6" y="219" width="10" height="2.5" fill="#9E2B21"/><text x="20" y="223" font-size="10.5" fill="#565B62">Affected companies <tspan fill="#9E2B21">-18.5%</tspan></text><rect x="181.8" y="219" width="10" height="2.5" fill="#3B4A5C"/><text x="195.8" y="223" font-size="10.5" fill="#565B62">S&amp;P 500 <tspan fill="#3B4A5C">-6.4%</tspan></text><rect x="290.5" y="219" width="10" height="2.5" fill="#8A6B3D"/><text x="304.5" y="223" font-size="10.5" fill="#565B62">OIH <tspan fill="#8A6B3D">-17.1%</tspan></text></svg>
+    <figcaption>How the affected companies moved against the market over the
+    last 60 trading days, rebased to zero. Shaded band is the
+    5-day detection window.</figcaption>
+  </figure>
+  
+
+  <div class="panels">
+
+  <details>
+    <summary><span class="chev"></span>Why this fired
+      <span class="n">59/100</span></summary>
+    <div class="body">
+      <p class="note">The score adds up seven separate signals. The hatched part
+      of the bar is what this event did <em>not</em> earn.</p>
+      <div class="bar">
+        
+        <div class="seg" style="flex:0 0 11.9648639024018%;background:#22384F"
+             title="magnitude — 12.0"></div>
+        
+        <div class="seg" style="flex:0 0 18.0%;background:#43738A"
+             title="breadth — 18.0"></div>
+        
+        <div class="seg" style="flex:0 0 6.477676554262691%;background:#33556E"
+             title="relative weakness — 6.5"></div>
+        
+        <div class="seg" style="flex:0 0 7.949956608886376%;background:#57909B"
+             title="abnormality — 7.9"></div>
+        
+        <div class="seg" style="flex:0 0 6.9317434355069665%;background:#7BAFAC"
+             title="correlation — 6.9"></div>
+        
+        <div class="seg" style="flex:0 0 3.8760059256263832%;background:#A5C9BE"
+             title="volume — 3.9"></div>
+        
+        <div class="seg" style="flex:0 0 3.537636090135978%;background:#C9DCD1"
+             title="benchmark confirmation — 3.5"></div>
+        
+        <div class="unearned"></div>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#43738A"></span>
+        <span class="txt"><span class="nm">Breadth</span>
+          <span class="ex">5 of 5 members (100%) are down at least 3%. The bar is a supermajority: a fixed count like &#39;three companies&#39; means something very different in a 5-member group than a 20-member one.</span></span>
+        <span class="pts">18.0</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#22384F"></span>
+        <span class="txt"><span class="nm">Magnitude</span>
+          <span class="ex">Industry median 5-day return is -9.5%. Scales from 0 at -3% to 100 at -15%.</span></span>
+        <span class="pts">12.0</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#57909B"></span>
+        <span class="txt"><span class="nm">Abnormality</span>
+          <span class="ex">The move is 2.3 standard deviations below this industry&#39;s own distribution of 5-day returns over the past year. A volatile industry has to move further to look abnormal.</span></span>
+        <span class="pts">7.9</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#7BAFAC"></span>
+        <span class="txt"><span class="nm">Correlation</span>
+          <span class="ex">Mean pairwise correlation of daily returns across members is 0.68. High correlation means they are falling together, which points to a shared cause rather than coincidence.</span></span>
+        <span class="pts">6.9</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#33556E"></span>
+        <span class="txt"><span class="nm">Relative weakness</span>
+          <span class="ex">This group normally moves 0.94x the market (R² 0.27). With the S&amp;P 500 at -3.9%, a fall of -3.7% would be ordinary. It actually fell -9.5%, leaving -5.2% the market cannot account for. That residual, not the raw gap, is what distinguishes an industry shock from a broad sell-off in a high-beta group.</span></span>
+        <span class="pts">6.5</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#A5C9BE"></span>
+        <span class="txt"><span class="nm">Volume</span>
+          <span class="ex">Median volume z-score is +1.9 against the trailing 60-day mean. Conviction selling usually shows up as volume.</span></span>
+        <span class="pts">3.9</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#C9DCD1"></span>
+        <span class="txt"><span class="nm">Benchmark confirmation</span>
+          <span class="ex">OIH (VanEck Oil Services ETF) returned -9.1%, confirming the move extends beyond the large-cap names measured here. This group fell in line with the ETF (-0.5%). Overlap with our universe is high — the ETF holds many of the same companies, so treat this as corroboration rather than an independent second opinion.</span></span>
+        <span class="pts">3.5</span>
+      </div>
+      
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>Conditions this had to meet
+      <span class="n">6/6</span></summary>
+    <div class="body">
+      <p class="note">A high score alone is not an event. These conditions gate
+      anything stronger than a watch.</p>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>At least 80% of the industry declining<span class="d">5 of 5 (100%) at or below -3% (need 80%).</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>At least 4 companies declining<span class="d">5 declining. A percentage of a very small group is still a very small group, so an absolute floor applies too.</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>Industry median 5d return at or below -8%<span class="d">Median is -9.5%.</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>At least 60% underperforming the S&amp;P 500 by 5%+<span class="d">3 of 5 (60%) qualify — need 60% and at least 3.</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>Move is abnormal vs the industry&#39;s own volatility<span class="d">2.3 sigma (need 1.5).</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>Industry ETF confirms the decline (OIH)<span class="d">OIH returned -9.1% (need -5% or worse).</span></span>
+      </div>
+      
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>What caused it
+      <span class="n">not run</span></summary>
+    <div class="body">
+      <div class="judge empty">
+        <div class="mark">Not available</div>
+        
+          <p style="margin:0">No ANTHROPIC_API_KEY configured. The decline was detected and measured, but no cause analysis was performed. Do not read the zeroes as findings — they mean the analysis did not run.</p>
+        
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>Market statistics
+      <span class="n">β 0.94</span></summary>
+    <div class="body">
+      <table class="stats"><tbody>
+      
+      <tr><td class="k">Beta<span class="f">β = Cov(r_i, r_m) / Var(r_m)</span></td>
+          <td class="v">0.94</td>
+          <td class="m">How much this group normally moves for a given market move, measured over the year before this window. Below 1 means it is less market-sensitive than average.</td></tr>
+      
+      <tr><td class="k">R-squared<span class="f">R² = ρ²(r_i, r_m)</span></td>
+          <td class="v">0.27</td>
+          <td class="m">The market explains 27% of this group&#39;s normal day-to-day movement. The rest is industry-specific.</td></tr>
+      
+      <tr><td class="k">Expected return<span class="f">E[r_i] = β × r_m</span></td>
+          <td class="v">-3.7%</td>
+          <td class="m">Given the S&amp;P 500 at -3.9%, this is the fall that would have been unremarkable.</td></tr>
+      
+      <tr><td class="k">Alpha<span class="f">α = r_i − β × r_m</span></td>
+          <td class="v">-5.2%</td>
+          <td class="m">The part of the fall the market cannot account for. This is the actual signal — the raw gap against the index flatters any high-beta group.</td></tr>
+      
+      <tr><td class="k">Industry ETF (OIH)<span class="f">r_etf, and r_i − r_etf</span></td>
+          <td class="v">-9.1%</td>
+          <td class="m">VanEck Oil Services ETF over the same window; this group is -0.5% against it. Overlap with our own universe is high, so this corroborates rather than independently confirms.</td></tr>
+      
+      <tr><td class="k">Abnormality<span class="f">z = (r − μ) / σ</span></td>
+          <td class="v">2.3σ</td>
+          <td class="m">Standard deviations below this group&#39;s own average 5-day return over the past year. Scales the move by how volatile the group already was.</td></tr>
+      
+      <tr><td class="k">Mean correlation<span class="f">ρ̄ = mean ρ(r_a, r_b), all pairs</span></td>
+          <td class="v">0.68</td>
+          <td class="m">How closely members moved together. High correlation is the signature of one shared cause rather than several coincidences.</td></tr>
+      
+      <tr><td class="k">Dispersion<span class="f">σ of member returns</span></td>
+          <td class="v">1.6%</td>
+          <td class="m">Spread of individual outcomes. Low dispersion means the event hit everyone about equally.</td></tr>
+      
+      <tr><td class="k">Breadth<span class="f">n declining / n members</span></td>
+          <td class="v">100%</td>
+          <td class="m">5 of 5 members fell at least 3%. The trigger requires a supermajority, not a fixed count.</td></tr>
+      
+      <tr><td class="k">Volume anomaly<span class="f">z = (V − μ₆₀) / σ₆₀</span></td>
+          <td class="v">+1.9σ</td>
+          <td class="m">Median volume against its 60-day norm. Conviction selling shows up as volume; a drift on thin volume does not.</td></tr>
+      
+      </tbody></table>
+      
+      <figure class="chart tight"><svg viewBox="0 0 616 139" width="100%" role="img" aria-label="Return of each company over the 5-day window" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="73.6" y="8.0" width="422.8" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="18.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">NOV</text><text x="568" y="18.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-11.2%</text><rect x="110.5" y="29.0" width="386.0" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="39.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">FTI</text><text x="568" y="39.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-10.2%</text><rect x="135.7" y="50.0" width="360.8" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="60.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">SLB</text><text x="568" y="60.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-9.5%</text><rect x="170.1" y="71.0" width="326.4" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="81.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">BKR</text><text x="568" y="81.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-8.6%</text><rect x="254.3" y="92.0" width="242.2" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="102.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">HAL</text><text x="568" y="102.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-6.4%</text><line x1="496.5" y1="4" x2="496.5" y2="113.0" stroke="#16181B" stroke-width="1"/><line x1="347.2" y1="4" x2="347.2" y2="113.0" stroke="#3B4A5C" stroke-width="1.3" stroke-dasharray="3 3"/><text x="351.2" y="127.0" font-size="10" fill="#3B4A5C" text-anchor="start">S&amp;P 500 -3.9%</text><line x1="135.7" y1="4" x2="135.7" y2="113.0" stroke="#16181B" stroke-width="1.3" stroke-dasharray="3 3"/><text x="139.7" y="127.0" font-size="10" fill="#16181B" text-anchor="start">median -9.5%</text></svg>
+        <figcaption>Every member's return over the window. A tight cluster
+        points to one shared cause; a long tail means several different stories
+        are being averaged together.</figcaption></figure>
+      
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>The companies
+      <span class="n">5</span></summary>
+    <div class="body">
+      <table><thead><tr><th>Ticker</th><th>Company</th>
+        <th class="num">5d</th><th class="num">vs S&amp;P</th>
+        <th class="num">Volume</th><th class="num">Off high</th></tr></thead><tbody>
+      
+      <tr><td class="tk">NOV</td><td>NOV Inc.</td>
+        <td class="num dn">-11.2%</td>
+        <td class="num">-7.2%</td>
+        <td class="num">+3.3σ</td>
+        <td class="num">-26%</td>
+      </tr>
+      <tr><td class="tk">FTI</td><td>TechnipFMC</td>
+        <td class="num dn">-10.2%</td>
+        <td class="num">-6.2%</td>
+        <td class="num">+2.5σ</td>
+        <td class="num">-23%</td>
+      </tr>
+      <tr><td class="tk">SLB</td><td>SLB</td>
+        <td class="num dn">-9.5%</td>
+        <td class="num">-5.6%</td>
+        <td class="num">+1.0σ</td>
+        <td class="num">-32%</td>
+      </tr>
+      <tr><td class="tk">BKR</td><td>Baker Hughes</td>
+        <td class="num dn">-8.6%</td>
+        <td class="num">-4.7%</td>
+        <td class="num">+1.9σ</td>
+        <td class="num">-25%</td>
+      </tr>
+      <tr><td class="tk">HAL</td><td>Halliburton</td>
+        <td class="num dn">-6.4%</td>
+        <td class="num">-2.5%</td>
+        <td class="num">+1.1σ</td>
+        <td class="num">-37%</td>
+      </tr>
+      </tbody></table>
+    </div>
+  </details>
+
+  
+  <details>
+    <summary><span class="chev"></span>If this turns out to be temporary
+      <span class="n">5 ranked</span></summary>
+    <div class="body">
+      <p class="note">Which of these companies looks best placed to recover — <em>if</em>
+      the cause turns out to be temporary. That condition is doing a lot of work,
+      and this ranking cannot tell you whether it holds. Only
+      26% of the intended inputs are running;
+      the rest need a fundamentals feed.</p>
+      
+      <div class="cand">
+        <div class="r"><span class="i">1</span>
+          <span class="t">SLB</span><span class="nm">SLB</span>
+          <span class="s">61</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (+0.0% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>Trailing volatility is 0.79x the industry median (21% annualised).</li>
+          <li>Traded 3.2x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li>
+          <li>After its three worst prior 5-day declines, it returned +2.3% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>32% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">2</span>
+          <span class="t">HAL</span><span class="nm">Halliburton</span>
+          <span class="s">60</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (+3.1% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>Trailing volatility is 0.93x the industry median (25% annualised).</li>
+          <li>After its three worst prior 5-day declines, it returned +9.9% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Traded 2.6x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li>
+          <li>37% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">3</span>
+          <span class="t">NOV</span><span class="nm">NOV Inc.</span>
+          <span class="s">60</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (-1.6% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>After its three worst prior 5-day declines, it returned +9.5% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Trailing volatility is 1.00x the industry median (27% annualised).</li>
+          <li>26% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>Traded 1.0x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">4</span>
+          <span class="t">BKR</span><span class="nm">Baker Hughes</span>
+          <span class="s">54</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (+0.9% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>25% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>After its three worst prior 5-day declines, it returned +4.2% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Trailing volatility is 1.10x the industry median (30% annualised).</li>
+          <li>Traded 0.6x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">5</span>
+          <span class="t">FTI</span><span class="nm">TechnipFMC</span>
+          <span class="s">54</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (-0.7% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>Trailing volatility is 1.00x the industry median (27% annualised).</li>
+          <li>23% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>After its three worst prior 5-day declines, it returned -2.2% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Traded 0.7x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li></ul>
+        
+      </div>
+      
+    </div>
+  </details>
+  
+
+  
+
+  </div>
+</section>
+
+
+<footer>
+Source: yfinance (backfill) &middot;
+parameters 0.3.0-unvalidated, not yet validated by backtesting &middot;
+generated 2026-08-27 16:07 UTC<br>
+Research output. Scores are model estimates, not predictions. A detected shock is
+not a reason to buy anything.
+</footer>
+</div></body></html>

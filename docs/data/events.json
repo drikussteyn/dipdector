@@ -1,0 +1,322 @@
+{
+  "events": [
+    {
+      "as_of": "2016-01-11",
+      "headline": "Oil & Gas Equipment & Services fell 12.1% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.12148107756121962,
+      "path": "events/2016-01-11-oil-and-gas-equipment-and-services.html",
+      "score": 62.906493364548915
+    },
+    {
+      "as_of": "2016-06-17",
+      "headline": "Passenger Airlines fell 9.6% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.095861031531288,
+      "path": "events/2016-06-17-passenger-airlines.html",
+      "score": 63.0719792808023
+    },
+    {
+      "as_of": "2018-02-09",
+      "headline": "Oil & Gas Equipment & Services fell 10.8% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.1083230841116476,
+      "path": "events/2018-02-09-oil-and-gas-equipment-and-services.html",
+      "score": 69.825415304038
+    },
+    {
+      "as_of": "2018-10-26",
+      "headline": "Oil & Gas Equipment & Services fell 9.5% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.09526289401310073,
+      "path": "events/2018-10-26-oil-and-gas-equipment-and-services.html",
+      "score": 58.73788251682019
+    },
+    {
+      "as_of": "2019-03-25",
+      "headline": "Regional Banks fell 13.1% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.13101863645134532,
+      "path": "events/2019-03-25-regional-banks.html",
+      "score": 86.37238190562405
+    },
+    {
+      "as_of": "2019-08-15",
+      "headline": "Oil & Gas Equipment & Services fell 10.1% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.10110739411064429,
+      "path": "events/2019-08-15-oil-and-gas-equipment-and-services.html",
+      "score": 61.70884311181511
+    },
+    {
+      "as_of": "2020-02-28",
+      "headline": "Oil & Gas Equipment & Services fell 19.4% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.1938822414332767,
+      "path": "events/2020-02-28-oil-and-gas-equipment-and-services.html",
+      "score": 78.4701866588708
+    },
+    {
+      "as_of": "2020-02-28",
+      "headline": "Passenger Airlines fell 21.0% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.21048585481343773,
+      "path": "events/2020-02-28-passenger-airlines.html",
+      "score": 92.10775524040686
+    },
+    {
+      "as_of": "2020-02-28",
+      "headline": "Regional Banks fell 16.9% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.16942650538057252,
+      "path": "events/2020-02-28-regional-banks.html",
+      "score": 81.93188142136432
+    },
+    {
+      "as_of": "2020-03-06",
+      "headline": "Hotels, Resorts & Cruise Lines fell 12.9% in 5 trading days",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.1291905490728119,
+      "path": "events/2020-03-06-hotels-resorts-and-cruise-lines.html",
+      "score": 87.01548194783281
+    },
+    {
+      "as_of": "2021-07-20",
+      "headline": "Oil & Gas Equipment & Services fell 10.3% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.10336521441465696,
+      "path": "events/2021-07-20-oil-and-gas-equipment-and-services.html",
+      "score": 63.826113265797666
+    },
+    {
+      "as_of": "2021-12-16",
+      "headline": "Passenger Airlines fell 8.9% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.08930534654864519,
+      "path": "events/2021-12-16-passenger-airlines.html",
+      "score": 56.769982110790956
+    },
+    {
+      "as_of": "2022-03-01",
+      "headline": "Passenger Airlines fell 9.5% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.09493345157597188,
+      "path": "events/2022-03-01-passenger-airlines.html",
+      "score": 64.24032425506806
+    },
+    {
+      "as_of": "2022-03-08",
+      "headline": "Hotels, Resorts & Cruise Lines fell 12.1% in 5 trading days",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "level": "INVESTIGATE",
+      "median_return": -0.12126423802270647,
+      "path": "events/2022-03-08-hotels-resorts-and-cruise-lines.html",
+      "score": 63.881681562441756
+    },
+    {
+      "as_of": "2022-04-05",
+      "headline": "Semiconductors fell 9.3% in 5 trading days",
+      "industry": "Semiconductors",
+      "level": "INVESTIGATE",
+      "median_return": -0.09288511772715308,
+      "path": "events/2022-04-05-semiconductors.html",
+      "score": 57.88835057908066
+    },
+    {
+      "as_of": "2022-04-05",
+      "headline": "Regional Banks fell 8.4% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "INVESTIGATE",
+      "median_return": -0.08404320206254406,
+      "path": "events/2022-04-05-regional-banks.html",
+      "score": 55.451797793048215
+    },
+    {
+      "as_of": "2022-05-11",
+      "headline": "Passenger Airlines fell 14.4% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.14373829208801836,
+      "path": "events/2022-05-11-passenger-airlines.html",
+      "score": 64.99027447257996
+    },
+    {
+      "as_of": "2022-05-11",
+      "headline": "Hotels, Resorts & Cruise Lines fell 18.2% in 5 trading days",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "level": "INVESTIGATE",
+      "median_return": -0.18218437367398788,
+      "path": "events/2022-05-11-hotels-resorts-and-cruise-lines.html",
+      "score": 64.6488986379119
+    },
+    {
+      "as_of": "2022-06-16",
+      "headline": "Oil & Gas Equipment & Services fell 17.2% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.17156324605667805,
+      "path": "events/2022-06-16-oil-and-gas-equipment-and-services.html",
+      "score": 93.17677909448662
+    },
+    {
+      "as_of": "2022-09-27",
+      "headline": "Passenger Airlines fell 13.0% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.12977095367757652,
+      "path": "events/2022-09-27-passenger-airlines.html",
+      "score": 63.98492743432347
+    },
+    {
+      "as_of": "2022-09-27",
+      "headline": "Oil & Gas Equipment & Services fell 10.8% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.10810807615994,
+      "path": "events/2022-09-27-oil-and-gas-equipment-and-services.html",
+      "score": 64.3886407397194
+    },
+    {
+      "as_of": "2023-03-14",
+      "headline": "Passenger Airlines fell 10.4% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.10391202319783543,
+      "path": "events/2023-03-14-passenger-airlines.html",
+      "score": 70.59930563055141
+    },
+    {
+      "as_of": "2023-03-14",
+      "headline": "Regional Banks fell 20.4% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.20404587558122206,
+      "path": "events/2023-03-14-regional-banks.html",
+      "score": 100.0
+    },
+    {
+      "as_of": "2023-03-14",
+      "headline": "Oil & Gas Equipment & Services fell 10.7% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.10677174222689789,
+      "path": "events/2023-03-14-oil-and-gas-equipment-and-services.html",
+      "score": 64.82063632754375
+    },
+    {
+      "as_of": "2023-10-24",
+      "headline": "Regional Banks fell 9.6% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "INVESTIGATE",
+      "median_return": -0.09618688313081819,
+      "path": "events/2023-10-24-regional-banks.html",
+      "score": 58.36402244921442
+    },
+    {
+      "as_of": "2024-08-05",
+      "headline": "Passenger Airlines fell 11.9% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.1185218995230416,
+      "path": "events/2024-08-05-passenger-airlines.html",
+      "score": 74.10639990707466
+    },
+    {
+      "as_of": "2024-08-05",
+      "headline": "Hotels, Resorts & Cruise Lines fell 10.8% in 5 trading days",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "level": "INVESTIGATE",
+      "median_return": -0.10848466394895417,
+      "path": "events/2024-08-05-hotels-resorts-and-cruise-lines.html",
+      "score": 65.85936689566076
+    },
+    {
+      "as_of": "2024-08-05",
+      "headline": "Oil & Gas Equipment & Services fell 10.3% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.10293719630028719,
+      "path": "events/2024-08-05-oil-and-gas-equipment-and-services.html",
+      "score": 61.83007819401552
+    },
+    {
+      "as_of": "2025-03-12",
+      "headline": "Passenger Airlines fell 20.2% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.20204327738262717,
+      "path": "events/2025-03-12-passenger-airlines.html",
+      "score": 83.30202049202434
+    },
+    {
+      "as_of": "2025-03-12",
+      "headline": "Hotels, Resorts & Cruise Lines fell 10.1% in 5 trading days",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "level": "INVESTIGATE",
+      "median_return": -0.10066400001825426,
+      "path": "events/2025-03-12-hotels-resorts-and-cruise-lines.html",
+      "score": 63.963946702592516
+    },
+    {
+      "as_of": "2025-04-09",
+      "headline": "Regional Banks fell 9.3% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "INVESTIGATE",
+      "median_return": -0.09326583067009636,
+      "path": "events/2025-04-09-regional-banks.html",
+      "score": 62.18753894569628
+    },
+    {
+      "as_of": "2025-04-09",
+      "headline": "Oil & Gas Equipment & Services fell 14.7% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.14719120331102908,
+      "path": "events/2025-04-09-oil-and-gas-equipment-and-services.html",
+      "score": 93.31929106063768
+    },
+    {
+      "as_of": "2025-06-13",
+      "headline": "Passenger Airlines fell 9.6% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.09600001743861608,
+      "path": "events/2025-06-13-passenger-airlines.html",
+      "score": 59.41280007877646
+    },
+    {
+      "as_of": "2026-03-11",
+      "headline": "Passenger Airlines fell 11.2% in 5 trading days",
+      "industry": "Passenger Airlines",
+      "level": "INVESTIGATE",
+      "median_return": -0.11240738402769312,
+      "path": "events/2026-03-11-passenger-airlines.html",
+      "score": 62.12979211418746
+    },
+    {
+      "as_of": "2026-06-22",
+      "headline": "Oil & Gas Equipment & Services fell 11.2% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
+      "level": "INVESTIGATE",
+      "median_return": -0.11186869888570372,
+      "path": "events/2026-06-22-oil-and-gas-equipment-and-services.html",
+      "score": 71.89162911615928
+    }
+  ],
+  "last_run": "2026-08-26",
+  "params_version": "0.3.0-unvalidated",
+  "universe": 35
+}

@@ -1,4 +1,7 @@
-# DipDector — prototype v0.1
+# DipDector — design notes
+
+The status of each subsystem against the master devlog. For setup and
+operation see `README.md`.
 
 An end-to-end vertical slice of the system described in the master devlog. It
 runs the whole chain against one as-of date:
