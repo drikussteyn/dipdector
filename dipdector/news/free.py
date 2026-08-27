@@ -19,10 +19,11 @@ from __future__ import annotations
 
 import datetime as dt
 import time
+from dataclasses import replace
 from typing import List, Optional
 from urllib.parse import quote
 
-from .engine import Article
+from .engine import Article, to_utc
 
 # Rough source-quality tiers, per devlog s.12. Anything unlisted falls to 5.
 TIER_HINTS = {
@@ -53,6 +54,7 @@ class FreeNewsProvider:
 
     def fetch(self, keywords: List[str], as_of: dt.datetime,
               lookback_days: int = 10) -> List[Article]:
+        as_of = to_utc(as_of)
         since = as_of - dt.timedelta(days=lookback_days)
         out, seen = [], set()
 
@@ -61,13 +63,16 @@ class FreeNewsProvider:
                 if art is None:
                     continue
                 # Hard cutoff. Never relax this — it is what keeps backtests honest.
-                if not (since <= art.published_at <= as_of):
+                if not (since <= to_utc(art.published_at) <= as_of):
                     continue
                 key = art.headline.strip().lower()[:120]
                 if key in seen or not key:
                     continue
                 seen.add(key)
-                out.append(art)
+                # Normalised on the way out so the sort below cannot hit a
+                # mixed naive/aware comparison, and so every downstream
+                # consumer sees one timezone.
+                out.append(replace(art, published_at=to_utc(art.published_at)))
             time.sleep(self.polite_delay)
 
         return sorted(out, key=lambda a: a.published_at)

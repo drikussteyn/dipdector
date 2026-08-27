@@ -40,6 +40,15 @@ LEVEL_WORD = {"MAJOR_EVENT": "Major event", "INVESTIGATE": "Investigate",
               "WATCH": "Watch", "NONE": "Normal"}
 
 
+def _env(*names: str) -> Optional[str]:
+    """First of `names` that is set and non-empty."""
+    for n in names:
+        v = os.environ.get(n)
+        if v:
+            return v
+    return None
+
+
 @dataclass
 class Message:
     subject: str
@@ -88,12 +97,17 @@ class SMTPSender:
                  from_addr: Optional[str] = None):
         self.host = host or os.environ.get("SMTP_HOST", "smtp.gmail.com")
         self.port = int(port or os.environ.get("SMTP_PORT", 587))
-        self.user = user or os.environ.get("SMTP_USER")
+        # Both spellings are accepted. .env.example and the workflow have
+        # always said SMTP_USERNAME / SMTP_SENDER while this class read
+        # SMTP_USER / SMTP_FROM, so a correctly-followed setup guide produced
+        # a sender that refused to start.
+        self.user = user or _env("SMTP_USERNAME", "SMTP_USER")
         self.password = password or os.environ.get("SMTP_PASSWORD")
-        self.from_addr = from_addr or os.environ.get("SMTP_FROM") or self.user
+        self.from_addr = (from_addr or _env("SMTP_SENDER", "SMTP_FROM")
+                          or self.user)
         if not self.user or not self.password:
             raise RuntimeError(
-                "SMTP_USER and SMTP_PASSWORD must be set. For Gmail, "
+                "SMTP_USERNAME and SMTP_PASSWORD must be set. For Gmail, "
                 "SMTP_PASSWORD is an App Password, not your login password.")
 
     def send(self, to: str, message: Message) -> None:
@@ -161,7 +175,7 @@ def get_sender(kind: str = "auto") -> EmailSender:
         return ResendSender()
     if os.environ.get("RESEND_API_KEY"):
         return ResendSender()
-    if os.environ.get("SMTP_USER") and os.environ.get("SMTP_PASSWORD"):
+    if _env("SMTP_USERNAME", "SMTP_USER") and os.environ.get("SMTP_PASSWORD"):
         return SMTPSender()
     return ConsoleSender()
 

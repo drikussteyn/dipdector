@@ -24,7 +24,10 @@ import os
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Protocol
 
-MODEL = "claude-sonnet-4-6"
+# Claude Sonnet 5 is both newer and cheaper than the Sonnet 4.6 this was
+# written against ($2/$10 vs $3/$15 per 1M tokens). Override with
+# DIPDECTOR_MODEL to move to claude-opus-5 without touching code.
+MODEL = os.environ.get("DIPDECTOR_MODEL", "claude-sonnet-5")
 
 CAUSE_TAXONOMY = [
     "geopolitical conflict", "oil/fuel shock", "recession/economic slowdown",
@@ -85,6 +88,22 @@ class EventAssessment:
         return d
 
 
+def to_utc(ts: dt.datetime) -> dt.datetime:
+    """
+    Coerce a datetime to timezone-aware UTC.
+
+    The three feeds disagree about tzinfo: yfinance returns aware timestamps,
+    Yahoo's RSS returns RFC-822 strings that may carry an offset or not, and
+    EODHD returns ISO strings that sometimes end in Z. The as-of cutoff below
+    is load-bearing for s.44.5, and a naive/aware comparison raises TypeError
+    at exactly the moment an alert fires — quiet days never reach this code.
+    Naive input is read as UTC, which is what every caller here means by it.
+    """
+    if ts.tzinfo is None:
+        return ts.replace(tzinfo=dt.timezone.utc)
+    return ts.astimezone(dt.timezone.utc)
+
+
 class NewsProvider(Protocol):
     name: str
 
@@ -121,6 +140,7 @@ class EODHDNewsProvider:
               lookback_days: int = 7) -> List[Article]:
         import requests
 
+        as_of = to_utc(as_of)
         since = as_of - dt.timedelta(days=lookback_days)
         seen, out = set(), []
         for kw in keywords:
@@ -133,7 +153,8 @@ class EODHDNewsProvider:
             )
             r.raise_for_status()
             for item in r.json():
-                pub = dt.datetime.fromisoformat(item["date"].replace("Z", "+00:00"))
+                pub = to_utc(dt.datetime.fromisoformat(
+                    item["date"].replace("Z", "+00:00")))
                 # DEVLOG s.36 / s.44.5 — hard cutoff, enforced here so the
                 # backtester can never see an article before it was published.
                 if pub > as_of:
@@ -212,6 +233,28 @@ def _build_user_prompt(industry, assessment, articles) -> str:
             f"ARTICLES ({len(articles)}):\n{arts}")
 
 
+def _stub(reason: str, n_articles: int) -> EventAssessment:
+    """
+    An explicit "we did not analyse this" result.
+
+    The zeroes are not findings and the wording says so. s.41 forbids a number
+    whose provenance the reader cannot recover, and a silent zero here would
+    read as "no structural risk" rather than "no analysis".
+    """
+    return EventAssessment(
+        title="Cause not determined",
+        causes=["other"], causal_chain="unknown",
+        temporary_confidence=0, structural_risk=0,
+        severity=0, continuation_risk=0,
+        reasoning=(f"{reason} The decline was detected and measured, but no "
+                   f"cause analysis was performed. Do not read the zeroes as "
+                   f"findings — they mean the analysis did not run."),
+        evidence_article_ids=[], unresolved_questions=["Everything."],
+        n_articles_considered=n_articles,
+        generated_at=dt.datetime.now(dt.timezone.utc), is_stub=True,
+    )
+
+
 def classify_event(industry: str, assessment, articles: List[Article],
                    api_key: Optional[str] = None) -> EventAssessment:
     """Call Claude to cluster and classify. Falls back to an explicit stub."""
@@ -220,34 +263,44 @@ def classify_event(industry: str, assessment, articles: List[Article],
     if not key or not articles:
         reason = ("No ANTHROPIC_API_KEY configured." if not key
                   else "No articles retrieved for this industry and window.")
-        return EventAssessment(
-            title="Cause not determined",
-            causes=["other"], causal_chain="unknown",
-            temporary_confidence=0, structural_risk=0,
-            severity=0, continuation_risk=0,
-            reasoning=(f"{reason} The decline was detected and measured, but no "
-                       f"cause analysis was performed. Do not read the zeroes as "
-                       f"findings — they mean the analysis did not run."),
-            evidence_article_ids=[], unresolved_questions=["Everything."],
-            n_articles_considered=len(articles),
-            generated_at=dt.datetime.now(dt.timezone.utc), is_stub=True,
-        )
+        return _stub(reason, len(articles))
 
     import requests
 
-    r = requests.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                 "content-type": "application/json"},
-        json={"model": MODEL, "max_tokens": 2000, "system": SYSTEM_PROMPT,
-              "messages": [{"role": "user",
-                            "content": _build_user_prompt(industry, assessment, articles)}]},
-        timeout=90,
-    )
-    r.raise_for_status()
-    text = "".join(b.get("text", "") for b in r.json()["content"] if b["type"] == "text")
-    payload = json.loads(text.replace("```json", "").replace("```", "").strip())
+    # Everything from here to the parse is best-effort. The alert does not
+    # depend on it: the numbers are already computed by engine/metrics.py, and
+    # s.44 keeps judgement separable from measurement. A rate limit, an outage
+    # or a reply that isn't the JSON we asked for must degrade to "cause not
+    # determined" — it must not take down a run that has something to report.
+    try:
+        r = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": key, "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"},
+            json={"model": MODEL, "max_tokens": 2000, "system": SYSTEM_PROMPT,
+                  "messages": [{"role": "user",
+                                "content": _build_user_prompt(
+                                    industry, assessment, articles)}]},
+            timeout=90,
+        )
+        r.raise_for_status()
+        text = "".join(b.get("text", "") for b in r.json()["content"]
+                       if b["type"] == "text")
+        payload = json.loads(
+            text.replace("```json", "").replace("```", "").strip())
+    except Exception as exc:                 # noqa: BLE001 — degrade, never die
+        return _stub(f"Cause analysis did not complete "
+                     f"({type(exc).__name__}: {exc}).", len(articles))
 
+    try:
+        return _assessment_from(payload, len(articles))
+    except Exception as exc:                 # noqa: BLE001
+        return _stub(f"Cause analysis returned an unreadable payload "
+                     f"({type(exc).__name__}: {exc}).", len(articles))
+
+
+def _assessment_from(payload: dict, n_articles: int) -> EventAssessment:
+    """Map the model's JSON onto the dataclass. Raises if the shape is wrong."""
     return EventAssessment(
         title=payload["title"],
         causes=payload.get("causes", []),
@@ -259,7 +312,7 @@ def classify_event(industry: str, assessment, articles: List[Article],
         reasoning=payload.get("reasoning", ""),
         evidence_article_ids=payload.get("evidence_article_ids", []),
         unresolved_questions=payload.get("unresolved_questions", []),
-        n_articles_considered=len(articles),
+        n_articles_considered=n_articles,
         generated_at=dt.datetime.now(dt.timezone.utc),
     )
 

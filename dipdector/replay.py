@@ -100,8 +100,9 @@ def run(as_of: dt.date, provider_kind: str, fixture: str, out: str,
         print(f"\n[4/6] {a.industry}: investigating cause "
               f"(news provider: {news_provider.name})")
         kws = keywords_for(a.industry, [c.ticker for c in a.metrics.companies])
-        articles = news_provider.fetch(
-            kws, dt.datetime.combine(as_of, dt.time(23, 59)), lookback_days=10)
+        cutoff = dt.datetime.combine(as_of, dt.time(23, 59),
+                                     tzinfo=dt.timezone.utc)
+        articles = news_provider.fetch(kws, cutoff, lookback_days=10)
         print(f"      {len(articles)} articles within the as-of cutoff")
         event = classify_event(a.industry, a, articles)
         if event.is_stub:

@@ -156,9 +156,12 @@ def run(args) -> int:
 
     for item in to_send:
         a = item["assessment"]
-        arts = news.fetch(keywords_for(a.industry,
-                                       [c.ticker for c in a.metrics.companies]),
-                          dt.datetime.combine(as_of, dt.time(23, 59)), 10)
+        cutoff = dt.datetime.combine(as_of, dt.time(23, 59),
+                                     tzinfo=dt.timezone.utc)
+        arts = news.fetch(
+            keywords_for(a.industry,
+                         [c.ticker for c in a.metrics.companies]),
+            cutoff, 10)
         event = classify_event(a.industry, a, arts)
         cands = score_candidates(a.metrics, truncated.close, CONFIG, event)
         store.record_event(a, truncated, event, cands, arts)
