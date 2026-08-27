@@ -40,6 +40,7 @@ from .news.engine import (EODHDNewsProvider, NullNewsProvider, classify_event,
 from .notify.email import compose, compose_heartbeat, get_sender
 from .notify.state import AlertState
 from .report import render
+from .publish import note_quiet_run, publish
 from .store.db import EventStore
 
 LEVEL_ORDER = [AlertLevel.NONE, AlertLevel.WATCH, AlertLevel.INVESTIGATE,
@@ -132,6 +133,12 @@ def run(args) -> int:
         state.runs_since_last_alert += 1
         quiet = state.runs_since_last_alert
         print(f"\nNothing to send. {quiet} runs since the last alert.")
+        if args.publish_dir:
+            # So a stale-looking archive means a quiet market and not a dead
+            # job. Without this the newest entry could be months old with no
+            # way to tell the difference.
+            note_quiet_run(args.publish_dir, as_of.isoformat(),
+                           CONFIG.params_version, len(companies))
         if args.heartbeat_every and quiet % args.heartbeat_every == 0:
             msg = compose_heartbeat(as_of, quiet, state.summary(), len(companies))
             sender.send(args.to, msg)
@@ -172,18 +179,33 @@ def run(args) -> int:
         })
     store.close()
 
-    report_html = render(events_for_report, {
+    run_meta = {
         "as_of": as_of.isoformat(), "window": CONFIG.detection.primary_window,
         "params_version": CONFIG.params_version, "source": frame.source,
         "synthetic": frame.synthetic,
         "generated_at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-    })
+    }
+    report_html = render(events_for_report, run_meta)
     if args.save_report:
         with open(args.save_report, "w") as f:
             f.write(report_html)
         print(f"Report written to {args.save_report}")
 
-    message = compose(events_for_report, as_of, frame.synthetic, report_html)
+    # --- publish one permanent page per event, then link to it ----------
+    links = {}
+    if args.publish_dir:
+        site_url = args.site_url or os.environ.get("SITE_BASE_URL")
+        reports = publish(events_for_report, run_meta, args.publish_dir,
+                          site_url, len(companies))
+        links = {r.industry: r.link for r in reports}
+        for r in reports:
+            print(f"  published {r.path}")
+        if not site_url:
+            print("  note: SITE_BASE_URL unset — the email will carry "
+                  "relative paths, not clickable links.")
+
+    message = compose(events_for_report, as_of, frame.synthetic, report_html,
+                      links)
     sender.send(args.to, message)
     print(f"\nSent {len(to_send)} alert(s) to {args.to} via {sender.name}.")
 
@@ -213,6 +235,11 @@ def main():
     p.add_argument("--state", default="state/alert_state.json")
     p.add_argument("--db", default="state/dipdector.duckdb")
     p.add_argument("--save-report", default=None)
+    p.add_argument("--publish-dir", default="docs",
+                   help="write the hosted report pages here; '' disables")
+    p.add_argument("--site-url", default=None,
+                   help="public base URL of the published site; or set "
+                        "SITE_BASE_URL. Without it the email has no links.")
     p.add_argument("--cooldown", type=int, default=45,
                    help="days an industry stays suppressed after an alert")
     p.add_argument("--heartbeat-every", type=int, default=20,

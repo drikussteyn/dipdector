@@ -1,13 +1,19 @@
-# Runs the scan on GitHub's machines, free for public repos and well inside the
-# free minutes for private ones. Preferred over cron on a laptop, which only
-# fires when the lid is open.
+# Runs the scan on GitHub's machines: free for public repos, and well inside
+# the free minutes for private ones. Preferred over cron on a laptop, which
+# only fires when the lid is open.
+#
+# The job does three things that have to happen together: scan, publish the
+# report pages, and commit both the pages and the alert state back to the
+# repository. The state file is what stops the same event being emailed every
+# day; the pages are what the email links to.
 name: DipDector daily scan
 
 on:
   schedule:
     # 21:45 UTC on weekdays. US markets close at 20:00 or 21:00 UTC depending
     # on daylight saving, so this leaves a margin for the daily bar to settle.
-    # GitHub's scheduler is best-effort and can run late; that is fine here.
+    # GitHub's scheduler is best-effort and can run late under load; that is
+    # fine here, because daily bars do not change after the close.
     - cron: "45 21 * * 1-5"
   workflow_dispatch:        # lets you trigger a run by hand from the Actions tab
 
@@ -20,20 +26,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: write        # needed to commit the state file back
+      contents: write        # needed to commit the pages and state back
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
+          # 3.12 or newer is required, not a preference: charts.py uses a
+          # backslash inside an f-string expression, which is a SyntaxError
+          # before 3.12.
           python-version: "3.12"
           cache: pip
 
       - run: pip install -r requirements.txt
 
-      # State lives in the repo so alert de-duplication survives between runs.
-      # Without it you get emailed about the same event every single day.
       - name: Run scan
         env:
           ALERT_EMAIL:       ${{ secrets.ALERT_EMAIL }}
@@ -44,27 +51,47 @@ jobs:
           SMTP_PASSWORD:     ${{ secrets.SMTP_PASSWORD }}
           SMTP_SENDER:       ${{ secrets.SMTP_SENDER }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Derived, not a secret: Pages serves a project site at
+          # https://<owner>.github.io/<repo>. This is what makes the links in
+          # the email absolute and clickable.
+          SITE_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        # Exit codes are meaningful here: 0 = nothing fired, 10 = alerts were
+        # sent, anything else = a real failure. 10 is a success, so it must be
+        # absorbed — otherwise every day the detector actually works would be
+        # reported as a failed run, and the failure notification would become
+        # noise you learn to ignore.
         run: |
+          set +e
           python -m dipdector.daily \
             --provider yfinance \
+            --sender smtp \
             --level INVESTIGATE \
             --state state/alert_state.json \
             --db state/dipdector.duckdb \
-            --save-report state/last_report.html
+            --publish-dir docs
+          code=$?
+          set -e
+          case "$code" in
+            0)  echo "Scan complete: nothing met the trigger conditions." ;;
+            10) echo "Scan complete: alerts sent." ;;
+            *)  echo "Scan FAILED with exit code $code."; exit "$code" ;;
+          esac
 
-      - name: Persist alert state
+      - name: Commit pages and alert state
         run: |
           git config user.name  "dipdector-bot"
           git config user.email "dipdector-bot@users.noreply.github.com"
-          git add state/ || true
-          git diff --staged --quiet || git commit -m "state: scan $(date -u +%F)"
+          git add docs/ state/ || true
+          git diff --staged --quiet || git commit -m "scan $(date -u +%F)"
           git push || echo "nothing to push"
 
-      # So a silent failure doesn't look like a quiet market.
+      # So a silent failure does not look like a quiet market.
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: dipdector-failure-${{ github.run_id }}
-          path: state/
+          path: |
+            state/
+            docs/
           if-no-files-found: ignore

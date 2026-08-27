@@ -30,7 +30,7 @@ import smtplib
 import ssl
 from dataclasses import dataclass
 from email.message import EmailMessage
-from typing import List, Optional, Protocol
+from typing import Dict, List, Optional, Protocol
 
 from .. import narrative
 
@@ -166,7 +166,18 @@ class ResendSender:
 
 
 def get_sender(kind: str = "auto") -> EmailSender:
-    """Pick a sender. 'auto' uses whatever credentials are present."""
+    """
+    Pick a sender. 'auto' defers to EMAIL_PROVIDER, then to whatever
+    credentials are present.
+
+    EMAIL_PROVIDER is honoured because .env.example and the setup guide both
+    tell you to start on `console` and switch to `smtp` once the text looks
+    right. If nothing read it, that instruction would be actively unsafe: you
+    would set console, paste in working SMTP credentials, and the very first
+    run would mail for real.
+    """
+    if kind == "auto":
+        kind = os.environ.get("EMAIL_PROVIDER") or "auto"
     if kind == "console":
         return ConsoleSender()
     if kind == "smtp":
@@ -184,20 +195,47 @@ def get_sender(kind: str = "auto") -> EmailSender:
 # Composition
 # --------------------------------------------------------------------------
 
+def _button(url: Optional[str]) -> str:
+    """
+    A table-cell button, because Outlook ignores padding on <a>.
+
+    Returns nothing at all when there is no URL, so an unpublished run degrades
+    to the plain summary rather than rendering a link to nowhere.
+    """
+    if not url:
+        return ""
+    return (
+        '<tr><td style="padding-top:16px">'
+        '<table role="presentation" cellpadding="0" cellspacing="0"><tr>'
+        f'<td bgcolor="#16181B" style="border-radius:4px">'
+        f'<a href="{_esc(url)}" style="display:inline-block;padding:11px 20px;'
+        f'font:500 14px/1 -apple-system,Segoe UI,Helvetica,sans-serif;'
+        f'color:#F7F7F3;text-decoration:none">Read the full report &rarr;</a>'
+        '</td></tr></table></td></tr>')
+
+
 def _esc(s) -> str:
     return (str(s).replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace('"', "&quot;"))
 
 
 def compose(alerts: List[dict], as_of: dt.date, synthetic: bool,
-            report_html: Optional[str] = None) -> Message:
+            report_html: Optional[str] = None,
+            links: Optional[Dict[str, str]] = None) -> Message:
     """
     Build the alert email. Inline styles and tables only.
 
     Deliberately short. If the email tries to reproduce the report you will skim
     it; if it gives you the verdict and one line of evidence per industry, you
-    will read it and open the attachment when it matters.
+    will read it and follow the link when it matters.
+
+    `links` maps industry name to the published report URL. When it is present
+    the email carries links and no attachment: the hosted page keeps the
+    progressive disclosure that an inbox would strip, and the reader gets the
+    real report instead of a download. Without it the report is attached, so
+    a local or unconfigured run still delivers something readable.
     """
+    links = links or {}
     top = max(alerts, key=lambda a: a["assessment"].score)
     ta = top["assessment"]
     n = len(alerts)
@@ -234,7 +272,9 @@ def compose(alerts: List[dict], as_of: dt.date, synthetic: bool,
             f"{m.relative_to_market:+.1%} vs S&P 500"
             + (f" · {m.benchmark_ticker} {m.benchmark_return:+.1%}"
                if m.benchmark_return is not None else "")
-            + f"\n  Why: {al.get('reason', '')}\n")
+            + f"\n  Why: {al.get('reason', '')}\n"
+            + (f"\n  Full report: {links[a.industry]}\n"
+               if links.get(a.industry) else ""))
 
         html_parts.append(f"""
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
@@ -257,16 +297,23 @@ def compose(alerts: List[dict], as_of: dt.date, synthetic: bool,
   {m.relative_to_market:+.1%} vs S&amp;P 500{
     f" &middot; {_esc(m.benchmark_ticker)} {m.benchmark_return:+.1%}"
     if m.benchmark_return is not None else ""}</td></tr>
+{_button(links.get(a.industry))}
 </table>""")
 
+    if links:
+        where = ("Full reports are linked above."
+                 if len(alerts) > 1 else "The full report is linked above.")
+    else:
+        where = "The full report is attached — open it in a browser."
     footer_text = (
-        f"\nAs of {as_of}. Full report attached — open it in a browser.\n"
+        f"\nAs of {as_of}. {where}\n"
         f"Research output only. A detected shock is not a reason to buy anything.\n")
     footer_html = (
         f'<hr style="border:none;border-top:1px solid #D8D8D1;margin:8px 0 14px">'
         f'<div style="font:400 12px/1.6 -apple-system,Segoe UI,sans-serif;color:#565B62">'
-        f'As of {as_of}. The full report is attached — open it in a browser, '
-        f'since email clients strip the interactive sections.<br>'
+        f'As of {_esc(as_of)}. {_esc(where)} Email clients strip the '
+        f'interactive sections, so the detail lives on the page rather than '
+        f'in this message.<br>'
         f'Research output only. A detected shock is not a reason to buy anything.'
         f'</div>')
 
@@ -275,7 +322,7 @@ def compose(alerts: List[dict], as_of: dt.date, synthetic: bool,
             f'{"".join(html_parts)}{footer_html}</div></body>')
 
     attachments = []
-    if report_html:
+    if report_html and not links:
         attachments.append((f"dipdector-{as_of}.html", "text/html",
                             report_html.encode("utf-8")))
 
