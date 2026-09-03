@@ -32,7 +32,7 @@ def load_env() -> None:
     load_dotenv()
 
 
-PARAMS_VERSION = "0.5.0-fitted"
+PARAMS_VERSION = "0.6.0-fitted"
 
 CHANGELOG_THRESHOLDS = [
     ("0.1.0-unvalidated", "Initial values taken verbatim from devlog s.6 and s.50. "
@@ -43,6 +43,28 @@ CHANGELOG_THRESHOLDS = [
                           "raised 4 -> 5. Added beta-adjusted excess return. "
                           "Effect on event frequency measured, not assumed — see "
                           "README."),
+    ("0.6.0-fitted", "Re-derived on the primary-source universe, because "
+                     "0.5.0 was fitted on a Wikipedia GICS grouping and then "
+                     "left running on a different one - the parameters and "
+                     "the data they governed had come apart. Same method, "
+                     "clean sources: SPDR holdings for constituents, the "
+                     "price provider for classification, 104,544 "
+                     "industry-days 1990-2026, 1,206 combinations, fitted on "
+                     "1990-2012 and verified on 2013-2026. Depth confirmed "
+                     "STABLE at +0.90 and member-decline at +1.00, both in "
+                     "the same order as before, so the conclusions survived "
+                     "the change of source. Window is only +0.60 and at -15% "
+                     "its rank correlation is negative: 5 days ranks 1st then "
+                     "2nd across the eras while 2 days ranks 5th then 1st, so "
+                     "5 is kept as the most CONSISTENT window rather than a "
+                     "proven optimum. Depth analysed jointly with window "
+                     "rather than marginally - a fall only means something "
+                     "paired with the time it took. industry_median_threshold "
+                     "-0.10 -> -0.12. Engine-validated 2016-2026: 4.1 -> 2.3 "
+                     "events/year, 12-month median +33.0% -> +48.9%, 23 of 23 "
+                     "recovered. -0.15 tested better still (+60.5%, 100%) but "
+                     "on 13 events in 10.7 years, too thin to trust and too "
+                     "rare to learn from."),
     ("0.5.0-fitted", "First thresholds derived from evidence rather than "
                      "taken from the devlog. 1,350 combinations swept over a "
                      "36-year panel (1990-2026, 104k industry-days), scored "
@@ -124,7 +146,7 @@ class DetectionConfig:
     material_decline: float = -0.05
 
     # s.6.2 — industry median return over primary window.
-    industry_median_threshold: float = -0.10
+    industry_median_threshold: float = -0.12
 
     # s.6.3 — number of companies underperforming S&P 500 by the relative
     # threshold below.

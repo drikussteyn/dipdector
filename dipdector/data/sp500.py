@@ -99,7 +99,15 @@ def fetch_holdings() -> pd.DataFrame:
 
 
 def classify(tickers: List[str], polite: float = 0.05) -> pd.DataFrame:
-    """Sector and industry per ticker, from the price provider."""
+    """
+    Sector, industry and market capitalisation per ticker.
+
+    Size is carried because the whole premise of this tool is large,
+    established companies caught in an industry-wide shock they are likely to
+    survive — so which of the fallers are the big ones is a first-order
+    question, not a footnote. It is CURRENT market cap: correct for a live
+    alert, approximate on a backfilled historical page.
+    """
     import yfinance as yf
 
     rows, failed = [], []
@@ -107,11 +115,13 @@ def classify(tickers: List[str], polite: float = 0.05) -> pd.DataFrame:
         try:
             info = yf.Ticker(t).info or {}
             sector, industry = info.get("sector"), info.get("industry")
+            cap = info.get("marketCap")
         except Exception:                    # noqa: BLE001 — recorded below
-            sector = industry = None
+            sector = industry = cap = None
         if sector and industry:
             rows.append({"ticker": t, "sector": sector,
-                         "sub_industry": industry})
+                         "sub_industry": industry,
+                         "market_cap": cap})
         else:
             failed.append(t)
         if i % 50 == 0:
