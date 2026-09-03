@@ -41,12 +41,14 @@ class Params:
     decline_level: int       # a member "declined" at this % (3, 5 or 10)
     breadth: float           # fraction of members that must have declined
     rel_market: float        # industry must trail the market by at least this
+    abnormality: float = 0.0  # z of the fall vs the industry's own history
 
     def label(self) -> str:
         return (f"{self.window}d "
                 f"med<={self.magnitude:+.0%} "
                 f"{self.breadth:.0%}@-{self.decline_level}% "
-                f"rel<={self.rel_market:+.0%}")
+                f"rel<={self.rel_market:+.0%}"
+                + (f" z>={self.abnormality:g}" if self.abnormality else ""))
 
 
 def _dedupe(hits: pd.DataFrame, cooldown: int) -> pd.DataFrame:
@@ -72,6 +74,8 @@ def evaluate(panel: pd.DataFrame, p: Params, cooldown: int = 60) -> pd.DataFrame
         & (panel[f"breadth{lvl}_{w}d"] >= p.breadth)
         & ((panel[f"ret_{w}d"] - panel[f"mkt_{w}d"]) <= p.rel_market)
     )
+    if p.abnormality:
+        m &= panel[f"abn_{w}d"] >= p.abnormality
     return _dedupe(panel.loc[m, ["date", "industry", f"ret_{w}d",
                                  f"breadth{lvl}_{w}d", "n_members",
                                  "fwd_1m", "fwd_3m", "fwd_6m", "fwd_12m",
@@ -93,10 +97,11 @@ def summarise(events: pd.DataFrame, years: float) -> Dict:
 
 def grid(windows: Iterable[int], magnitudes: Iterable[float],
          levels: Iterable[int], breadths: Iterable[float],
-         rels: Iterable[float]) -> List[Params]:
-    return [Params(w, m, l, b, r)
-            for w, m, l, b, r in product(windows, magnitudes, levels,
-                                         breadths, rels)]
+         rels: Iterable[float],
+         abnormalities: Iterable[float] = (0.0,)) -> List[Params]:
+    return [Params(w, m, l, b, r, z)
+            for w, m, l, b, r, z in product(windows, magnitudes, levels,
+                                            breadths, rels, abnormalities)]
 
 
 def run(panel: pd.DataFrame, params: List[Params],

@@ -32,7 +32,7 @@ def load_env() -> None:
     load_dotenv()
 
 
-PARAMS_VERSION = "0.4.0-unvalidated"
+PARAMS_VERSION = "0.5.0-fitted"
 
 CHANGELOG_THRESHOLDS = [
     ("0.1.0-unvalidated", "Initial values taken verbatim from devlog s.6 and s.50. "
@@ -43,6 +43,26 @@ CHANGELOG_THRESHOLDS = [
                           "raised 4 -> 5. Added beta-adjusted excess return. "
                           "Effect on event frequency measured, not assumed — see "
                           "README."),
+    ("0.5.0-fitted", "First thresholds derived from evidence rather than "
+                     "taken from the devlog. 1,350 combinations swept over a "
+                     "36-year panel (1990-2026, 104k industry-days), scored "
+                     "on 1990-2012 and re-scored on 2013-2026, which it never "
+                     "saw. Two findings ranked IDENTICALLY in both eras: "
+                     "deeper falls recover better (-20% > -15% > -10% > -8% > "
+                     "-5%), and requiring members to have fallen further "
+                     "selects better events (-10% > -5% > -3%). Breadth "
+                     "agreed at +0.77 and saturates by 0.7-0.8, so 0.80 "
+                     "stays. The detection window did NOT transfer (rank "
+                     "correlation -0.10: 1990-2012 preferred 5 days, "
+                     "2013-2026 preferred 2) so it is deliberately left at 5. "
+                     "industry_median_threshold -0.08 -> -0.10, "
+                     "material_decline -0.03 -> -0.05. Validated on the live "
+                     "engine 2016-2026: 4.9 -> 3.8 events/year, 12-month "
+                     "median +31.7% -> +35.5%, hit rate 82% -> 92%, recovery "
+                     "98% -> 100%, and further fall after entry -11.0% -> "
+                     "-6.3%. Absolute returns are inflated by survivorship "
+                     "bias and by a test period of unusually sharp "
+                     "recoveries; the RANKINGS are what these rest on."),
     ("0.4.0-unvalidated", "Replaced the flat 5-member floor with a "
                           "significance test. The floor was doing two jobs "
                           "badly: it blocked small groups that were genuinely "
@@ -101,10 +121,10 @@ class DetectionConfig:
     # s.6.1 — a company counts as "materially declining" at this return or worse
     # over the primary window. The devlog does not pin this number; it is
     # inferred so that "materially" is not left undefined in code.
-    material_decline: float = -0.03
+    material_decline: float = -0.05
 
     # s.6.2 — industry median return over primary window.
-    industry_median_threshold: float = -0.08
+    industry_median_threshold: float = -0.10
 
     # s.6.3 — number of companies underperforming S&P 500 by the relative
     # threshold below.
