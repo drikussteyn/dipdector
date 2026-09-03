@@ -27,7 +27,9 @@ from typing import List, Optional, Protocol
 # Claude Sonnet 5 is both newer and cheaper than the Sonnet 4.6 this was
 # written against ($2/$10 vs $3/$15 per 1M tokens). Override with
 # DIPDECTOR_MODEL to move to claude-opus-5 without touching code.
-MODEL = os.environ.get("DIPDECTOR_MODEL", "claude-sonnet-5")
+# `or` rather than a get() default: an unset GitHub Actions variable is
+# passed through as an empty string, not as an absent key.
+MODEL = os.environ.get("DIPDECTOR_MODEL") or "claude-sonnet-5"
 
 CAUSE_TAXONOMY = [
     "geopolitical conflict", "oil/fuel shock", "recession/economic slowdown",
@@ -277,7 +279,14 @@ def classify_event(industry: str, assessment, articles: List[Article],
             "https://api.anthropic.com/v1/messages",
             headers={"x-api-key": key, "anthropic-version": "2023-06-01",
                      "content-type": "application/json"},
-            json={"model": MODEL, "max_tokens": 2000, "system": SYSTEM_PROMPT,
+            # Generous ceiling, not a target: max_tokens caps what may be
+            # generated, and unused headroom costs nothing. It was 2000, and
+            # current models think adaptively before answering — on a hard
+            # event (32 articles, a real crisis) the reasoning consumed the
+            # whole budget and the reply came back with 1999 thinking tokens
+            # and an empty answer, which parsed as a failure and degraded a
+            # genuine alert to "cause not determined".
+            json={"model": MODEL, "max_tokens": 8000, "system": SYSTEM_PROMPT,
                   "messages": [{"role": "user",
                                 "content": _build_user_prompt(
                                     industry, assessment, articles)}]},
@@ -286,6 +295,13 @@ def classify_event(industry: str, assessment, articles: List[Article],
         r.raise_for_status()
         text = "".join(b.get("text", "") for b in r.json()["content"]
                        if b["type"] == "text")
+        if not text.strip():
+            # Distinct from malformed JSON, and worth naming separately: the
+            # model reasoned up to the ceiling without producing an answer.
+            stop = r.json().get("stop_reason")
+            raise RuntimeError(
+                f"the model returned reasoning but no answer "
+                f"(stop_reason={stop}); max_tokens may be too low")
         payload = json.loads(
             text.replace("```json", "").replace("```", "").strip())
     except Exception as exc:                 # noqa: BLE001 — degrade, never die
