@@ -11,6 +11,7 @@ corrupted.
 from __future__ import annotations
 
 import datetime as dt
+import pathlib
 
 import pandas as pd
 import pytest
@@ -44,12 +45,12 @@ def test_provider_covers_far_more_than_the_seed_table():
     assert len(full.companies_as_of(TODAY)) > 10 * len(seed.companies_as_of(TODAY))
 
 
-def test_grouping_is_by_sub_industry_not_sector():
-    """Sector is too coarse — chip fabs and payroll software are both 'IT'."""
+def test_grouping_is_by_industry_not_sector():
+    """Sector is too coarse — chip fabs and payroll software are both tech."""
     full = SP500ClassificationProvider()
     groups = full.industries(TODAY)
     assert "Semiconductors" in groups
-    assert "Information Technology" not in groups
+    assert "Technology" not in groups
     assert len(groups) > 100
 
 
@@ -70,25 +71,48 @@ def test_middle_gics_tiers_are_left_empty_not_invented():
 
 
 def test_default_provider_prefers_the_full_index():
-    assert default_provider().name == "sp500-gics-current"
+    assert default_provider().name == "sp500-current"
 
 
 def test_refusal_to_cache_a_truncated_list(monkeypatch):
     """A partial parse must fail loudly, not quietly shrink the universe."""
-    monkeypatch.setattr(sp500, "fetch_constituents",
+    monkeypatch.setattr(sp500, "fetch_holdings",
                         lambda: (_ for _ in ()).throw(
-                            RuntimeError("Only 12 constituents parsed")))
-    with pytest.raises(RuntimeError, match="constituents parsed"):
+                            RuntimeError("Only 12 holdings parsed")))
+    with pytest.raises(RuntimeError, match="holdings parsed"):
         sp500.refresh("/tmp/should-not-be-written.csv")
 
 
-def test_missing_columns_are_reported_not_ignored(monkeypatch):
-    bad = "<table><tr><th>Symbol</th></tr><tr><td>AAPL</td></tr></table>"
-
+def test_non_spreadsheet_response_is_refused(monkeypatch):
+    """The holdings host serves an HTML wall when it dislikes a client."""
     class R:
-        text = bad
+        content = b"<!DOCTYPE html><html>bot wall</html>"
         def raise_for_status(self): pass
 
     monkeypatch.setattr("requests.get", lambda *a, **k: R())
-    with pytest.raises(RuntimeError, match="column layout has changed"):
-        sp500.fetch_constituents()
+    with pytest.raises(RuntimeError, match="not a spreadsheet"):
+        sp500.fetch_holdings()
+
+
+def test_classification_shortfall_refuses_to_write(monkeypatch):
+    """If classification silently loses half the index, do not persist it."""
+    import pandas as pd
+    monkeypatch.setattr(sp500, "fetch_holdings",
+                        lambda: pd.DataFrame({"ticker": [f"T{i}" for i in range(500)],
+                                              "name": ["x"] * 500}))
+    monkeypatch.setattr(sp500, "classify",
+                        lambda tk, **kw: pd.DataFrame(
+                            {"ticker": tk[:10], "sector": ["S"] * 10,
+                             "sub_industry": ["I"] * 10}))
+    with pytest.raises(RuntimeError, match="survived classification"):
+        sp500.refresh("/tmp/should-not-be-written.csv")
+
+
+def test_universe_comes_from_primary_sources_only():
+    """
+    No crowd-edited data in the universe. Constituents come from the fund's
+    own holdings file and classification from the price provider.
+    """
+    src = (pathlib.Path(sp500.__file__)).read_text().lower()
+    assert "en.wikipedia.org" not in src
+    assert "ssga.com" in src

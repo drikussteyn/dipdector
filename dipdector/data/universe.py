@@ -192,7 +192,7 @@ class SeedClassificationProvider:
 
 class SP500ClassificationProvider(SeedClassificationProvider):
     """
-    The whole S&P 500, classified by GICS sub-industry.
+    The whole S&P 500, grouped by industry.
 
     This is what devlog s.4 actually asked for: constituents determined from
     the universe and its classification data, not chosen in advance. With the
@@ -200,17 +200,22 @@ class SP500ClassificationProvider(SeedClassificationProvider):
     somebody had picked; a crash anywhere else in the index was invisible to
     it, and looked exactly like a quiet day.
 
-    Sub-industry is the grouping level because it is the one that corresponds
-    to companies that actually compete with each other. Sector is too coarse —
-    "Information Technology" spans both semiconductor fabs and payroll
-    software, which do not fall together for the same reasons.
+    Industry is the grouping level because it is the one that corresponds to
+    companies that actually compete with each other — "Semiconductors",
+    "Banks - Regional", "Airlines", "Railroads". Sector is too coarse:
+    "Technology" spans both chip fabs and payroll software, which do not fall
+    together for the same reasons.
+
+    Constituents come from the SPDR fund's own holdings file and the
+    classification from the price provider; see data/sp500.py. Neither is
+    crowd-edited.
 
     Groups smaller than `min_industry_members` are still scored out by
     engine/metrics.py, which is the correct behaviour rather than a gap: three
     companies falling together is a coincidence, not industry-wide breadth.
     """
 
-    name = "sp500-gics-current"
+    name = "sp500-current"
     point_in_time = False           # current membership; see the module note
 
     def __init__(self, path: Optional[str] = None):
@@ -221,8 +226,8 @@ class SP500ClassificationProvider(SeedClassificationProvider):
             Company(
                 ticker=r.ticker, name=r.name, exchange="",
                 sector=r.sector,
-                # Wikipedia publishes Sector and Sub-Industry but not the two
-                # middle GICS tiers. Left empty rather than guessed at.
+                # The vendor taxonomy has two levels, not GICS's four. The
+                # middle tiers are left empty rather than invented.
                 industry_group="", industry="",
                 sub_industry=r.sub_industry,
                 index_membership=("S&P 500",),
