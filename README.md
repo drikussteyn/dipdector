@@ -144,34 +144,45 @@ preview one.
 
 Measured over 10.7 years of real prices across the full index, not fixtures:
 
-**It fires 3.7 times a year.** Under ~1 would be too tight to learn from; over
-~15 would make it a screener. Widening from 6 hand-picked industries to all 127
-sub-industries barely moved this, because the 80%-breadth gate does the real
-filtering — a 12-member group needs 10 of 12 falling, which is harder than 4 of
-5, not easier. The starting thresholds have never needed changing.
+**It fires 4.9 times a year.** Under ~1 would be too tight to learn from; over
+~15 would make it a screener.
+
+Groups are admitted on evidence rather than headcount. A flat 5-member floor
+used to decide which industries could be scored at all, which was wrong in both
+directions: it blocked small groups that were genuinely anomalous on a calm day,
+and drew a meaningless line between 4-of-4 and 5-of-5. Below 5 members, breadth
+is now tested against how much of the rest of the market fell that day — 3 of 3
+falling is a 9% coincidence when 45% of the market is down, and a 0.8% event
+when only 20% is. **13 of the 52 events come from groups the old floor excluded
+outright.**
+
+The test applies only to small groups, and that scoping is load-bearing: gating
+every industry on it made the detector measurably worse, because shocks cluster
+on days the whole market falls, and a high base rate then makes even 12-of-12
+look unsurprising.
 
 **The bounce is real.** Entering three days after each alert: 3-month median
-+9.9% (79% of the time positive), 12-month median +32.3% (84%). 97% of events
-recovered to their pre-shock level within two years, median 46 trading days.
++9.3% (74% of the time positive), 12-month median +31.7% (82%). 98% of events
+recovered to their pre-shock level within two years, median 43 trading days.
 
 **The score predicts the bounce.** Bucketed by score, 6-month hit rates rise
-77% → 83% → 92%. This was *not* true of the six-industry universe, where the
+71% → 81% → 94%. This was *not* true of the six-industry universe, where the
 buckets came out flat and out of order; that sample was dominated by a handful
 of correlated oil and airline events, and the wider cross-section fixed it.
 
 **Two things you should not skip:**
 
-- **The median event keeps falling another 10% after the alert**, worst case
+- **The median event keeps falling another 11% after the alert**, worst case
   45%. Detection is not timing. Better than the 19% the narrow universe showed,
   but still the number that decides whether a position is holdable.
 - **Survivorship bias is live.** The universe uses today's index membership for
   every historical date, so every figure above is optimistic. Fixing it needs
   point-in-time membership data.
 
-As a portfolio strategy the simulator returns +18.2% CAGR against the S&P 500's
-+13.4%, but at a deeper drawdown (−48% vs −34%) and near-identical risk-adjusted
-return (Sharpe 0.67 vs 0.68). Naive single-stock dip buying still beat both. It
-beats 83% of random-timing runs, so the detector is contributing — but the event
+As a portfolio strategy the simulator returns +16.7% CAGR against the S&P 500's
++13.4%, but at a deeper drawdown (−49% vs −34%) and slightly worse risk-adjusted
+return (Sharpe 0.60 vs 0.68). Naive single-stock dip buying still beat both. It
+beats random-timing controls, so the detector is contributing — but the event
 study is the half worth reading, and this is a research tool, not a strategy.
 
 ## Design rules held in code, not comments

@@ -218,8 +218,8 @@ def score_industry(m: IndustryMetrics, cfg) -> ShockAssessment:
         TriggerCheck(
             f"At least {d.min_declining_companies} companies declining",
             m.n_declining >= d.min_declining_companies,
-            f"{m.n_declining} declining. A percentage of a very small group is "
-            f"still a very small group, so an absolute floor applies too.",
+            f"{m.n_declining} declining. A backstop only — one or two names "
+            f"cannot show anything however improbable the arithmetic looks.",
         ),
         TriggerCheck(
             f"Industry median {m.window}d return at or below {d.industry_median_threshold:.0%}",
@@ -242,6 +242,18 @@ def score_industry(m: IndustryMetrics, cfg) -> ShockAssessment:
             f"{m.abnormality_z:.1f} sigma (need {d.min_abnormality_z:.1f}).",
         ),
     ]
+    if (m.n_members < d.breadth_significance_below
+            and m.breadth_pvalue is not None):
+        triggers.append(TriggerCheck(
+            "Breadth is unlikely to be coincidence",
+            m.breadth_pvalue <= d.max_breadth_pvalue,
+            f"{m.n_declining} of {m.n_members} fell while "
+            f"{m.market_decline_rate:.0%} of the rest of the universe did — "
+            f"a {m.breadth_pvalue:.1%} chance of happening by coincidence "
+            f"(need {d.max_breadth_pvalue:.0%} or less). This is what "
+            f"replaces a flat member count: the bar rises when the whole "
+            f"market is falling and relaxes when it is calm.",
+        ))
     if m.benchmark_return is not None:
         triggers.append(TriggerCheck(
             f"Industry ETF confirms the decline ({m.benchmark_ticker})",
@@ -250,6 +262,14 @@ def score_industry(m: IndustryMetrics, cfg) -> ShockAssessment:
             f"(need {d.benchmark_confirm_threshold:.0%} or worse).",
         ))
     notes = []
+    if (m.n_members < d.breadth_significance_below
+            and m.breadth_pvalue is None):
+        notes.append(
+            "Breadth could not be tested for significance: there was no "
+            "usable comparison universe outside this industry. The condition "
+            "is skipped rather than passed, so this alert rests on the "
+            "proportion of the group falling without knowing how ordinary "
+            "that was across the market that day.")
     if m.benchmark_return is None:
         notes.append(
             "Devlog s.6.4 requires industry ETF confirmation. No benchmark "

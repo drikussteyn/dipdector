@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from math import comb
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -73,6 +74,9 @@ class IndustryMetrics:
     n_underperforming: int
     # Beta-adjusted statistics. See _beta() for why these matter more than the
     # raw difference against the index.
+    # Breadth judged against the day, not against a fixed headcount.
+    market_decline_rate: Optional[float] = None
+    breadth_pvalue: Optional[float] = None
     beta_to_market: Optional[float] = None
     r_squared: Optional[float] = None
     expected_return: Optional[float] = None   # beta x market return
@@ -226,13 +230,75 @@ def compute_company_metrics(
     return m
 
 
+def breadth_pvalue(k: int, n: int,
+                   base_rate: Optional[float]) -> Optional[float]:
+    """
+    P(at least k of n declining | each declines independently at base_rate).
+
+    The exact binomial upper tail. Answers "how surprised should I be that
+    this many of the group fell?", which is the question a flat member count
+    cannot express: 3 of 3 is a 9% coincidence when 45% of the market is
+    falling and a 0.8% event when 20% is.
+
+    Independence is not true — companies in one industry are correlated by
+    construction, which is the whole premise here — so this OVERSTATES the
+    surprise. It is a screening statistic, not an inference, and it is used
+    as one: a gate that small groups must clear, not a probability reported
+    to the reader as if it were calibrated.
+    """
+    if n <= 0 or k <= 0 or base_rate is None:
+        return None
+    k = min(k, n)
+    # Degenerate base rates make the tail meaningless in both directions.
+    p = min(max(base_rate, 0.01), 0.99)
+    return float(sum(comb(n, i) * p ** i * (1.0 - p) ** (n - i)
+                     for i in range(k, n + 1)))
+
+
+def market_decline_rate(frame: PriceFrame, window: int, threshold: float,
+                        exclude: Optional[Sequence[str]] = None,
+                        min_universe: int = 30) -> Optional[float]:
+    """
+    Fraction of the rest of the universe declining at or below `threshold`.
+
+    Returns None when there is no usable comparison group, rather than a
+    guess. s.44 — absence of evidence is not evidence: a base rate that
+    cannot be estimated makes the significance test unavailable, and the
+    caller must skip that condition rather than let the industry pass it.
+
+    Two exclusions, both load-bearing. Benchmarks are dropped because an ETF
+    is not a company and holds the very constituents being measured. The
+    industry's own members are dropped because comparing a group against a
+    universe that contains it asks whether it fell more than itself.
+    """
+    close = frame.close
+    if len(close) <= window:
+        return None
+    skip = set(exclude or ())
+    cols = [c for c in close.columns if c not in skip]
+    if len(cols) < min_universe:
+        return None
+    latest, prior = close.iloc[-1], close.iloc[-1 - window]
+    rets = (latest[cols] / prior[cols] - 1.0).dropna()
+    if len(rets) < min_universe:
+        return None
+    return float((rets <= threshold).sum() / len(rets))
+
+
 def compute_industry_metrics(
     industry: str,
     companies: List[Company],
     frame: PriceFrame,
     as_of: dt.date,
     cfg,
+    base_rate: Optional[float] = None,
 ) -> Optional[IndustryMetrics]:
+    """
+    `base_rate` is the market-wide decline rate for this window. Callers that
+    loop over many industries on one date should compute it once with
+    market_decline_rate() and pass it in; it is identical for every industry
+    on a given day and recomputing it per group is pure waste.
+    """
     d = cfg.detection
     windows = [d.primary_window, *d.context_windows]
     w = d.primary_window
@@ -271,6 +337,13 @@ def compute_industry_metrics(
 
     if len(cms) < d.min_industry_members:
         return None
+
+    if base_rate is None:
+        from ..data.benchmarks import all_tickers
+        base_rate = market_decline_rate(
+            frame, w, d.material_decline,
+            exclude=[cfg.market_benchmark, *all_tickers(),
+                     *[cm.ticker for cm in cms]])
 
     rets = np.array([cm.returns[w] for cm in cms], dtype=float)
     market_r = market_returns.get(w) or 0.0
@@ -333,6 +406,8 @@ def compute_industry_metrics(
         n_members=len(cms),
         n_declining=n_declining,
         pct_declining=n_declining / len(cms),
+        market_decline_rate=base_rate,
+        breadth_pvalue=breadth_pvalue(n_declining, len(cms), base_rate),
         median_return=median_r,
         mean_return=float(np.mean(rets)),
         worst_return=float(np.min(rets)),

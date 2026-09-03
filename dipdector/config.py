@@ -32,7 +32,7 @@ def load_env() -> None:
     load_dotenv()
 
 
-PARAMS_VERSION = "0.3.0-unvalidated"
+PARAMS_VERSION = "0.4.0-unvalidated"
 
 CHANGELOG_THRESHOLDS = [
     ("0.1.0-unvalidated", "Initial values taken verbatim from devlog s.6 and s.50. "
@@ -43,6 +43,27 @@ CHANGELOG_THRESHOLDS = [
                           "raised 4 -> 5. Added beta-adjusted excess return. "
                           "Effect on event frequency measured, not assumed — see "
                           "README."),
+    ("0.4.0-unvalidated", "Replaced the flat 5-member floor with a "
+                          "significance test. The floor was doing two jobs "
+                          "badly: it blocked small groups that were genuinely "
+                          "anomalous on a calm day, and it drew an arbitrary "
+                          "line between 4-of-4 and 5-of-5 whose real "
+                          "improbability differs by a factor of two. Breadth "
+                          "is now scored against the market-wide decline rate "
+                          "that day, so the bar rises automatically when "
+                          "everything is falling and relaxes when nothing is. "
+                          "min_industry_members 5 -> 3, "
+                          "min_declining_companies 4 -> 3, both now backstops "
+                          "rather than the test. Applied ONLY to groups "
+                          "below 5 members: a first attempt gated every "
+                          "industry on it and measurably degraded the "
+                          "detector, because shocks cluster on days the whole "
+                          "market falls and a high base rate then makes even "
+                          "12-of-12 look unsurprising. Measured over "
+                          "2016-2026: 3.7 -> 4.9 events/year, 13 of the 52 "
+                          "from groups the old floor excluded outright, with "
+                          "12-month median +32.3% -> +31.7% and recovery "
+                          "97% -> 98%. Coverage 297 -> 422 of 503 companies."),
     ("0.3.0-unvalidated", "Second comparator changed from a fixed Nasdaq-100 "
                           "to a per-industry ETF resolved from a registry. "
                           "S&P 500 remains the invariant primary. Activates "
@@ -73,7 +94,9 @@ class DetectionConfig:
     # meaningless: 80% of 4 members is 3 stocks wearing a percentage as a
     # disguise. Both conditions must hold.
     min_breadth_pct: float = 0.80
-    min_declining_companies: int = 4
+    # A backstop now, not the test. One or two names cannot demonstrate
+    # anything regardless of how improbable the arithmetic says it is.
+    min_declining_companies: int = 3
 
     # s.6.1 — a company counts as "materially declining" at this return or worse
     # over the primary window. The devlog does not pin this number; it is
@@ -104,7 +127,33 @@ class DetectionConfig:
     # mean anything. Raised from 4 alongside the percentage rule: in a 4-member
     # group every breadth figure is a multiple of 25% and the supermajority test
     # collapses into "all of them".
-    min_industry_members: int = 5
+    # Three is the floor at which the significance test below can say
+    # anything at all: 2 of 2 falling is a 1-in-5 coincidence even in a
+    # fairly calm market, which no p-value can rescue.
+    min_industry_members: int = 3
+
+    # s.6.1 — BREADTH SIGNIFICANCE. The real gate on small groups.
+    #
+    # A flat member floor asks the wrong question. "Did five companies fall?"
+    # is not the same as "was it surprising that they fell?" — and the second
+    # is what distinguishes an industry shock from an ordinary down day. So
+    # breadth is tested against the fraction of the whole universe declining
+    # over the same window: P(at least this many of n, given that base rate).
+    #
+    # 3 of 3 falling is a 9% coincidence when 45% of the market is down, and a
+    # 0.8% event when only 20% is. The old floor called both of them nothing.
+    max_breadth_pvalue: float = 0.02
+
+    # Applied ONLY to groups smaller than this. A first attempt made it an
+    # extra gate on every industry and measurably made things worse: shocks
+    # cluster on days the whole market is falling, and on those days a high
+    # base rate makes even 12-of-12 look unsurprising (p=0.03 in a crash), so
+    # the strongest events were the ones being rejected. Whether a move is
+    # market-wide is already answered by the relative-underperformance and
+    # abnormality conditions; re-answering it here double-counted and fought
+    # them. A large group demonstrates breadth by its size. A small one has
+    # to earn the benefit of the doubt, and this is how.
+    breadth_significance_below: int = 5
 
     # Beta is estimated on this many trading days ENDING BEFORE the detection
     # window, so the shock itself cannot inflate the estimate of how much
