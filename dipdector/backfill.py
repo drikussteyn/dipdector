@@ -43,7 +43,7 @@ from .data.benchmarks import all_tickers as benchmark_tickers
 from .data.providers import get_provider
 from .data.universe import default_provider
 from .engine.detection import AlertLevel
-from .news.engine import classify_event
+from .news.engine import stub
 from .publish import note_quiet_run, publish
 from .backtest.scan import scan_history
 
@@ -94,9 +94,17 @@ def main() -> int:
     for e in events:
         truncated = frame.as_of(e.detected_on)
         m = e.assessment.metrics
-        # No articles: free feeds do not reach back this far, so the page says
-        # the cause was not determined rather than guessing at one.
-        ev = classify_event(e.industry, e.assessment, [])
+        # The free feed carries only recent news — roughly 20 articles for
+        # today and none at all for anything months old — so a backfilled
+        # page cannot have a cause analysis. Say that, rather than let the
+        # page read as though the retrieval failed: the distinction between
+        # "this could not run here" and "this ran and found nothing" matters
+        # to someone deciding how much weight to give the report.
+        ev = stub(
+            f"This report was reconstructed from price history, not observed "
+            f"live. Cause analysis needs news from the week of the event, and "
+            f"the free feed only carries recent articles — nothing from "
+            f"{e.detected_on:%B %Y}. A live alert does run this step.")
         item = {
             "assessment": e.assessment, "event": ev,
             "candidates": score_candidates(m, truncated.close, CONFIG, ev)[:6],

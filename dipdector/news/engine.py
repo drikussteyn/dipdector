@@ -235,7 +235,7 @@ def _build_user_prompt(industry, assessment, articles) -> str:
             f"ARTICLES ({len(articles)}):\n{arts}")
 
 
-def _stub(reason: str, n_articles: int) -> EventAssessment:
+def stub(reason: str, n_articles: int = 0) -> EventAssessment:
     """
     An explicit "we did not analyse this" result.
 
@@ -265,7 +265,7 @@ def classify_event(industry: str, assessment, articles: List[Article],
     if not key or not articles:
         reason = ("No ANTHROPIC_API_KEY configured." if not key
                   else "No articles retrieved for this industry and window.")
-        return _stub(reason, len(articles))
+        return stub(reason, len(articles))
 
     import requests
 
@@ -305,13 +305,13 @@ def classify_event(industry: str, assessment, articles: List[Article],
         payload = json.loads(
             text.replace("```json", "").replace("```", "").strip())
     except Exception as exc:                 # noqa: BLE001 — degrade, never die
-        return _stub(f"Cause analysis did not complete "
+        return stub(f"Cause analysis did not complete "
                      f"({type(exc).__name__}: {exc}).", len(articles))
 
     try:
         return _assessment_from(payload, len(articles))
     except Exception as exc:                 # noqa: BLE001
-        return _stub(f"Cause analysis returned an unreadable payload "
+        return stub(f"Cause analysis returned an unreadable payload "
                      f"({type(exc).__name__}: {exc}).", len(articles))
 
 
