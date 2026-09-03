@@ -20,7 +20,12 @@ from dipdector.backtest.scan import scan_history
 from dipdector.backtest.simulator import SCENARIOS, Simulator, StrategyConfig
 from dipdector.data.providers import FixtureProvider
 from dipdector.data.benchmarks import all_tickers
-from dipdector.data.universe import default_provider
+from dipdector.data.universe import SeedClassificationProvider
+# These exercise the engine against the synthetic fixtures, which contain
+# prices for the six-industry seed universe only. They therefore pin the seed
+# provider explicitly rather than taking whatever default_provider() returns —
+# that is now the full S&P 500, whose constituents the fixtures have no prices
+# for. Testing the engine, not the universe.
 from dipdector.engine.detection import AlertLevel
 
 HISTORY = "dipdector/fixtures/synthetic_history.csv"
@@ -30,7 +35,7 @@ START, END = dt.date(2014, 1, 1), dt.date(2026, 6, 30)
 
 @pytest.fixture(scope="module")
 def frame():
-    cp = default_provider()
+    cp = SeedClassificationProvider()
     tickers = ([c.ticker for c in cp.companies_as_of(END)]
                + [CONFIG.market_benchmark] + all_tickers())
     return FixtureProvider(HISTORY).fetch(tickers, dt.date(2010, 1, 1), END)
@@ -38,7 +43,7 @@ def frame():
 
 @pytest.fixture(scope="module")
 def events(frame):
-    return scan_history(frame, default_provider(), START, END,
+    return scan_history(frame, SeedClassificationProvider(), START, END,
                         min_level=AlertLevel.INVESTIGATE, step=5, progress=False)
 
 
@@ -156,7 +161,7 @@ def test_deviations_from_spec_are_declared():
 
 def test_naive_control_is_not_catastrophic(frame):
     """Guards the bug where expired holdings were dropped instead of sold."""
-    cp = default_provider()
+    cp = SeedClassificationProvider()
     eq = mx.naive_dip_control(
         frame.close, [c.ticker for c in cp.companies_as_of(END)][:12],
         START, END, capital=100_000)

@@ -190,5 +190,54 @@ class SeedClassificationProvider:
         return out
 
 
+class SP500ClassificationProvider(SeedClassificationProvider):
+    """
+    The whole S&P 500, classified by GICS sub-industry.
+
+    This is what devlog s.4 actually asked for: constituents determined from
+    the universe and its classification data, not chosen in advance. With the
+    seed table the detector could only find a shock in one of six industries
+    somebody had picked; a crash anywhere else in the index was invisible to
+    it, and looked exactly like a quiet day.
+
+    Sub-industry is the grouping level because it is the one that corresponds
+    to companies that actually compete with each other. Sector is too coarse —
+    "Information Technology" spans both semiconductor fabs and payroll
+    software, which do not fall together for the same reasons.
+
+    Groups smaller than `min_industry_members` are still scored out by
+    engine/metrics.py, which is the correct behaviour rather than a gap: three
+    companies falling together is a coincidence, not industry-wide breadth.
+    """
+
+    name = "sp500-gics-current"
+    point_in_time = False           # current membership; see the module note
+
+    def __init__(self, path: Optional[str] = None):
+        from .sp500 import load
+
+        df = load(path) if path else load()
+        super().__init__([
+            Company(
+                ticker=r.ticker, name=r.name, exchange="",
+                sector=r.sector,
+                # Wikipedia publishes Sector and Sub-Industry but not the two
+                # middle GICS tiers. Left empty rather than guessed at.
+                industry_group="", industry="",
+                sub_industry=r.sub_industry,
+                index_membership=("S&P 500",),
+            )
+            for r in df.itertuples(index=False)
+        ])
+
+
 def default_provider() -> ClassificationProvider:
-    return SeedClassificationProvider()
+    """
+    The full index when its constituent list is available, the seed table
+    otherwise. The fallback keeps the tests and the synthetic fixtures — which
+    are built around the six-industry table — working unchanged.
+    """
+    try:
+        return SP500ClassificationProvider()
+    except Exception:                        # noqa: BLE001 — cache absent
+        return SeedClassificationProvider()

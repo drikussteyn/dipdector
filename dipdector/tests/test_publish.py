@@ -20,7 +20,12 @@ from dipdector.analysis.recovery import score_candidates
 from dipdector.config import CONFIG
 from dipdector.data.benchmarks import all_tickers
 from dipdector.data.providers import FixtureProvider
-from dipdector.data.universe import default_provider
+from dipdector.data.universe import SeedClassificationProvider
+# These exercise the engine against the synthetic fixtures, which contain
+# prices for the six-industry seed universe only. They therefore pin the seed
+# provider explicitly rather than taking whatever default_provider() returns —
+# that is now the full S&P 500, whose constituents the fixtures have no prices
+# for. Testing the engine, not the universe.
 from dipdector.engine.detection import score_industry
 from dipdector.engine.metrics import compute_industry_metrics
 from dipdector.news.engine import classify_event
@@ -34,7 +39,7 @@ SHOCK_DATE = dt.date(2026, 6, 30)
 @pytest.fixture(scope="module")
 def event():
     """One real event dict, shaped exactly as daily.py builds it."""
-    cp = default_provider()
+    cp = SeedClassificationProvider()
     tickers = ([c.ticker for c in cp.companies_as_of(SHOCK_DATE)]
                + [CONFIG.market_benchmark] + all_tickers())
     frame = FixtureProvider(FIXTURE).fetch(

@@ -17,7 +17,12 @@ import pytest
 from dipdector.config import CONFIG
 from dipdector.data.providers import FixtureProvider, PriceFrame
 from dipdector.data.benchmarks import all_tickers
-from dipdector.data.universe import default_provider
+from dipdector.data.universe import SeedClassificationProvider
+# These exercise the engine against the synthetic fixtures, which contain
+# prices for the six-industry seed universe only. They therefore pin the seed
+# provider explicitly rather than taking whatever default_provider() returns —
+# that is now the full S&P 500, whose constituents the fixtures have no prices
+# for. Testing the engine, not the universe.
 from dipdector.engine.detection import AlertLevel, score_industry
 from dipdector.engine.metrics import compute_industry_metrics
 
@@ -28,14 +33,14 @@ QUIET_DATE = dt.date(2026, 5, 15)
 
 @pytest.fixture(scope="module")
 def frame():
-    cp = default_provider()
+    cp = SeedClassificationProvider()
     tickers = ([c.ticker for c in cp.companies_as_of(SHOCK_DATE)]
                + [CONFIG.market_benchmark] + all_tickers())
     return FixtureProvider(FIXTURE).fetch(tickers, dt.date(2024, 1, 1), SHOCK_DATE)
 
 
 def _assess(frame, as_of, industry="Semiconductors"):
-    cp = default_provider()
+    cp = SeedClassificationProvider()
     members = cp.industry_members(industry, as_of)
     m = compute_industry_metrics(industry, members, frame.as_of(as_of), as_of, CONFIG)
     return score_industry(m, CONFIG) if m else None
@@ -138,7 +143,7 @@ def test_partial_breadth_does_not_trigger(frame):
     case and confirm the supermajority rule catches it.
     """
     from dipdector.data.providers import PriceFrame
-    cp = default_provider()
+    cp = SeedClassificationProvider()
     members = [c.ticker for c in cp.industry_members("Semiconductors", QUIET_DATE)]
     close = frame.close.copy()
     half = members[:len(members) // 2]
