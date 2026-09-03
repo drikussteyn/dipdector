@@ -26,7 +26,7 @@ import os
 import sys
 from typing import List
 
-from .config import CONFIG
+from .config import CONFIG, load_env
 from .analysis.recovery import score_candidates
 from .data.benchmarks import all_tickers as benchmark_tickers
 from .data.providers import get_provider
@@ -146,6 +146,7 @@ def run(as_of: dt.date, provider_kind: str, fixture: str, out: str,
 
 
 def main():
+    load_env()
     p = argparse.ArgumentParser(description="DipDector industry shock replay")
     p.add_argument("--as-of", required=True, help="YYYY-MM-DD")
     p.add_argument("--provider", default="fixture",

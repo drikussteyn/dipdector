@@ -28,7 +28,7 @@ import traceback
 import pandas as pd
 
 from .analysis.recovery import score_candidates
-from .config import CONFIG
+from .config import CONFIG, load_env
 from .data.benchmarks import all_tickers as benchmark_tickers
 from .data.providers import get_provider
 from .data.universe import default_provider
@@ -222,6 +222,7 @@ def run(args) -> int:
 
 
 def main():
+    load_env()
     p = argparse.ArgumentParser(description="DipDector daily check")
     p.add_argument("--to", default=os.environ.get("ALERT_EMAIL"),
                    help="recipient; or set ALERT_EMAIL")

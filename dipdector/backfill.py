@@ -31,7 +31,7 @@ import datetime as dt
 import sys
 
 from .analysis.recovery import score_candidates
-from .config import CONFIG
+from .config import CONFIG, load_env
 from .data.benchmarks import all_tickers as benchmark_tickers
 from .data.providers import get_provider
 from .data.universe import default_provider
@@ -42,6 +42,7 @@ from .backtest.scan import scan_history
 
 
 def main() -> int:
+    load_env()
     p = argparse.ArgumentParser(description="Backfill the DipDector archive")
     p.add_argument("--provider", default="yfinance",
                    choices=["yfinance", "eodhd", "fixture"])

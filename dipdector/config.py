@@ -13,6 +13,25 @@ of them have been validated by backtesting yet.
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List
 
+def load_env() -> None:
+    """
+    Load `.env` into the environment, if present.
+
+    Called from the CLI entry points rather than on import, so importing the
+    package never has a side effect. python-dotenv does not override variables
+    that are already set, which is the behaviour we want: in CI the real
+    secrets win, and a stale `.env` on a laptop cannot quietly shadow them.
+
+    A no-op if python-dotenv is not installed, so the package still imports
+    with only the core dependencies present.
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    load_dotenv()
+
+
 PARAMS_VERSION = "0.3.0-unvalidated"
 
 CHANGELOG_THRESHOLDS = [
