@@ -27,7 +27,7 @@ email from two years ago still opens the report as it was written that day.
 **An archive.** [`docs/index.html`](docs/index.html) lists every event ever
 detected, newest first.
 
-The archive ships already populated with **39 real events from 2016–2026**,
+The archive ships already populated with **41 real events from 2016–2026**,
 backfilled from live market data — including the March 2023 regional banking
 collapse (score 100/100), the February–March 2020 crash across eleven separate
 industries, and the August 2024 unwind.
@@ -142,48 +142,60 @@ preview one.
 
 ## What the numbers actually say
 
-Measured over 10.7 years of real prices across the full index, not fixtures:
+Measured over the full index, with thresholds derived from a 36-year study
+rather than assumed (see *Where the thresholds come from* below):
 
-**It fires 4.9 times a year.** Under ~1 would be too tight to learn from; over
+**It fires 3.8 times a year.** Under ~1 would be too tight to learn from; over
 ~15 would make it a screener.
 
-Groups are admitted on evidence rather than headcount. A flat 5-member floor
-used to decide which industries could be scored at all, which was wrong in both
-directions: it blocked small groups that were genuinely anomalous on a calm day,
-and drew a meaningless line between 4-of-4 and 5-of-5. Below 5 members, breadth
-is now tested against how much of the rest of the market fell that day — 3 of 3
-falling is a 9% coincidence when 45% of the market is down, and a 0.8% event
-when only 20% is. **13 of the 52 events come from groups the old floor excluded
-outright.**
+**The bounce is real.** Entering three days after each alert: 6-month median
++18.6%, 12-month median +35.5% (92% of the time positive). Every one of the 38
+events with a two-year window recovered to its pre-shock level, median 50
+trading days. At 12 months even the 10th-percentile outcome was positive
+(+3.2%) — the worst decile still made money.
 
-The test applies only to small groups, and that scoping is load-bearing: gating
-every industry on it made the detector measurably worse, because shocks cluster
-on days the whole market falls, and a high base rate then makes even 12-of-12
-look unsurprising.
+**The median event keeps falling another 6.3% after the alert**, worst case
+45%. Detection is not timing, and this is the number that decides whether a
+position is holdable.
 
-**The bounce is real.** Entering three days after each alert: 3-month median
-+9.3% (74% of the time positive), 12-month median +31.7% (82%). 98% of events
-recovered to their pre-shock level within two years, median 43 trading days.
+**Survivorship bias is live, and it inflates everything above.** The universe
+is today's S&P 500 applied to every historical date, so a company that fell and
+never recovered left the index and is absent by construction. Fixing it needs
+point-in-time membership data. Treat these figures as directionally right and
+numerically optimistic.
 
-**The score predicts the bounce.** Bucketed by score, 6-month hit rates rise
-71% → 81% → 94%. This was *not* true of the six-industry universe, where the
-buckets came out flat and out of order; that sample was dominated by a handful
-of correlated oil and airline events, and the wider cross-section fixed it.
+## Where the thresholds come from
 
-**Two things you should not skip:**
+The original values came from a design document and had never been fitted to
+anything. They now come from evidence, and `dipdector/research/` reproduces the
+whole study.
 
-- **The median event keeps falling another 11% after the alert**, worst case
-  45%. Detection is not timing. Better than the 19% the narrow universe showed,
-  but still the number that decides whether a position is holdable.
-- **Survivorship bias is live.** The universe uses today's index membership for
-  every historical date, so every figure above is optimistic. Fixing it needs
-  point-in-time membership data.
+A panel of **103,994 industry-days from 1990 to 2026** was precomputed, and
+**1,350 parameter combinations** were scored on 1990–2012 and then re-scored on
+2013–2026, which they had never seen. Two results ranked *identically* in both
+eras:
 
-As a portfolio strategy the simulator returns +16.7% CAGR against the S&P 500's
-+13.4%, but at a deeper drawdown (−49% vs −34%) and slightly worse risk-adjusted
-return (Sharpe 0.60 vs 0.68). Naive single-stock dip buying still beat both. It
-beats random-timing controls, so the detector is contributing — but the event
-study is the half worth reading, and this is a research tool, not a strategy.
+- **Deeper falls recover better** — a −20% industry decline beat −15%, which
+  beat −10%, −8% and −5%, in that exact order, twice.
+- **Requiring members to have fallen further selects better events** — counting
+  a company as "declining" at −10% beat −5%, which beat −3%, twice.
+
+Breadth agreed at +0.77 and saturates by 0.70–0.80, so 80% stays.
+
+**The detection window did not transfer at all** (rank correlation −0.10).
+2013–2026 says a 2-day window is best, on a +63% 12-month median; 1990–2012
+ranks 2 days *last of five*. Fitting on recent data alone would have moved the
+window on the strength of noise, so it is deliberately left at 5 days. The
+depth of a fall is a real signal; its speed is not.
+
+Only the two replicated findings were changed. Validated afterwards on the live
+engine — not on the panel — over 2016–2026: 4.9 → 3.8 events/year, 12-month
+median +31.7% → +35.5%, hit rate 82% → 92%, recovery 98% → 100%, and further
+fall after entry −11.0% → −6.3%.
+
+The thresholds rest on those rankings, which survivorship bias does not
+reorder, rather than on the absolute returns, which it inflates. Hence
+`PARAMS_VERSION = "0.5.0-fitted"` — fitted, not validated.
 
 ## Design rules held in code, not comments
 
@@ -218,6 +230,8 @@ dipdector/
   charts.py              inline SVG, no JS
   narrative.py           deterministic plain-English summaries
   replay.py              single-date runner
+  research/panel.py      36-year statistics panel for threshold work
+  research/sweep.py      parameter sweep with train/test split
   data/sp500.py          S&P 500 constituents + GICS, cached to CSV
   data/universe.py       classification adapter over that list
   data/                  price providers, ETF benchmarks

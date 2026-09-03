@@ -1,175 +1,139 @@
 {
   "events": [
     {
-      "as_of": "2016-01-11",
-      "headline": "Investment Banking & Brokerage fell 9.6% in 5 trading days",
-      "industry": "Investment Banking & Brokerage",
-      "level": "INVESTIGATE",
-      "median_return": -0.09593400452182399,
-      "path": "events/2016-01-11-investment-banking-and-brokerage.html",
-      "score": 63.26720843754869
-    },
-    {
-      "as_of": "2016-06-17",
-      "headline": "Passenger Airlines fell 8.9% in 5 trading days",
-      "industry": "Passenger Airlines",
-      "level": "INVESTIGATE",
-      "median_return": -0.0891588801294736,
-      "path": "events/2016-06-17-passenger-airlines.html",
-      "score": 58.78499694440896
-    },
-    {
       "as_of": "2017-06-15",
       "headline": "Semiconductor Materials & Equipment fell 10.3% in 5 trading days",
       "industry": "Semiconductor Materials & Equipment",
       "level": "MAJOR_EVENT",
-      "median_return": -0.1032207421305808,
+      "median_return": -0.10322108582083456,
       "path": "events/2017-06-15-semiconductor-materials-and-equipment.html",
-      "score": 77.83889564977108
-    },
-    {
-      "as_of": "2017-12-05",
-      "headline": "Semiconductor Materials & Equipment fell 10.2% in 5 trading days",
-      "industry": "Semiconductor Materials & Equipment",
-      "level": "MAJOR_EVENT",
-      "median_return": -0.10184402112119834,
-      "path": "events/2017-12-05-semiconductor-materials-and-equipment.html",
-      "score": 77.87817790319924
+      "score": 77.83895462029696
     },
     {
       "as_of": "2018-04-24",
       "headline": "Semiconductor Materials & Equipment fell 11.2% in 5 trading days",
       "industry": "Semiconductor Materials & Equipment",
       "level": "INVESTIGATE",
-      "median_return": -0.1124173848648563,
+      "median_return": -0.1124173883680325,
       "path": "events/2018-04-24-semiconductor-materials-and-equipment.html",
-      "score": 66.52287532202729
+      "score": 66.52288929888688
     },
     {
       "as_of": "2018-10-12",
       "headline": "Paper & Plastic Packaging Products & Materials fell 11.4% in 5 trading days",
       "industry": "Paper & Plastic Packaging Products & Materials",
       "level": "INVESTIGATE",
-      "median_return": -0.11389050103333265,
+      "median_return": -0.11389063903642382,
       "path": "events/2018-10-12-paper-and-plastic-packaging-products-and-materials.html",
-      "score": 56.91885425793253
+      "score": 56.91887684466587
     },
     {
       "as_of": "2018-12-11",
       "headline": "Life & Health Insurance fell 12.5% in 5 trading days",
       "industry": "Life & Health Insurance",
       "level": "INVESTIGATE",
-      "median_return": -0.12472107142116318,
+      "median_return": -0.12472083698866177,
       "path": "events/2018-12-11-life-and-health-insurance.html",
-      "score": 71.1555498611201
+      "score": 71.15543831462311
     },
     {
       "as_of": "2018-12-11",
       "headline": "Asset Management & Custody Banks fell 11.7% in 5 trading days",
       "industry": "Asset Management & Custody Banks",
       "level": "INVESTIGATE",
-      "median_return": -0.11739059947292352,
+      "median_return": -0.11739086087710132,
       "path": "events/2018-12-11-asset-management-and-custody-banks.html",
-      "score": 65.54746007791458
+      "score": 65.54749704397602
     },
     {
       "as_of": "2018-12-11",
       "headline": "Regional Banks fell 12.6% in 5 trading days",
       "industry": "Regional Banks",
       "level": "MAJOR_EVENT",
-      "median_return": -0.12601343182267732,
+      "median_return": -0.1260132914577377,
       "path": "events/2018-12-11-regional-banks.html",
-      "score": 77.92619847175615
-    },
-    {
-      "as_of": "2019-03-25",
-      "headline": "Diversified Banks fell 8.5% in 5 trading days",
-      "industry": "Diversified Banks",
-      "level": "INVESTIGATE",
-      "median_return": -0.08493836694792556,
-      "path": "events/2019-03-25-diversified-banks.html",
-      "score": 63.89645411403799
+      "score": 77.92618273581905
     },
     {
       "as_of": "2019-03-25",
       "headline": "Regional Banks fell 14.1% in 5 trading days",
       "industry": "Regional Banks",
       "level": "MAJOR_EVENT",
-      "median_return": -0.14124868003287855,
+      "median_return": -0.1412486103240606,
       "path": "events/2019-03-25-regional-banks.html",
-      "score": 89.68701712701635
+      "score": 89.68697899796759
     },
     {
       "as_of": "2020-02-28",
       "headline": "Life & Health Insurance fell 16.8% in 5 trading days",
       "industry": "Life & Health Insurance",
       "level": "MAJOR_EVENT",
-      "median_return": -0.16844580230077677,
+      "median_return": -0.16844548601529385,
       "path": "events/2020-02-28-life-and-health-insurance.html",
-      "score": 83.92429380341585
-    },
-    {
-      "as_of": "2020-03-06",
-      "headline": "Hotels, Resorts & Cruise Lines fell 10.8% in 5 trading days",
-      "industry": "Hotels, Resorts & Cruise Lines",
-      "level": "MAJOR_EVENT",
-      "median_return": -0.10758044219267515,
-      "path": "events/2020-03-06-hotels-resorts-and-cruise-lines.html",
-      "score": 82.53895096109002
+      "score": 83.92427638597616
     },
     {
       "as_of": "2020-03-06",
       "headline": "Oil & Gas Exploration & Production fell 14.8% in 5 trading days",
       "industry": "Oil & Gas Exploration & Production",
       "level": "MAJOR_EVENT",
-      "median_return": -0.14758609103562453,
+      "median_return": -0.14758589287492152,
       "path": "events/2020-03-06-oil-and-gas-exploration-and-production.html",
-      "score": 81.20722167747572
+      "score": 81.20716155433733
     },
     {
       "as_of": "2020-03-06",
-      "headline": "Regional Banks fell 9.2% in 5 trading days",
-      "industry": "Regional Banks",
-      "level": "INVESTIGATE",
-      "median_return": -0.09194417135210858,
-      "path": "events/2020-03-06-regional-banks.html",
-      "score": 60.926154355413175
+      "headline": "Hotels, Resorts & Cruise Lines fell 10.8% in 5 trading days",
+      "industry": "Hotels, Resorts & Cruise Lines",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.10758061401418473,
+      "path": "events/2020-03-06-hotels-resorts-and-cruise-lines.html",
+      "score": 76.82471495800512
     },
     {
       "as_of": "2020-03-13",
       "headline": "Aerospace & Defense fell 16.3% in 5 trading days",
       "industry": "Aerospace & Defense",
       "level": "MAJOR_EVENT",
-      "median_return": -0.16311586712026643,
+      "median_return": -0.16311579017520678,
       "path": "events/2020-03-13-aerospace-and-defense.html",
-      "score": 88.02815581460234
+      "score": 84.69481497193512
     },
     {
       "as_of": "2020-03-13",
       "headline": "Movies & Entertainment fell 15.8% in 5 trading days",
       "industry": "Movies & Entertainment",
       "level": "INVESTIGATE",
-      "median_return": -0.15757659792585155,
+      "median_return": -0.1575762076154631,
       "path": "events/2020-03-13-movies-and-entertainment.html",
-      "score": 67.19590583734924
+      "score": 67.19588161552917
+    },
+    {
+      "as_of": "2020-03-13",
+      "headline": "Regional Banks fell 15.0% in 5 trading days",
+      "industry": "Regional Banks",
+      "level": "MAJOR_EVENT",
+      "median_return": -0.15003971198767113,
+      "path": "events/2020-03-13-regional-banks.html",
+      "score": 77.92159379310299
     },
     {
       "as_of": "2020-03-20",
       "headline": "Building Products fell 24.9% in 5 trading days",
       "industry": "Building Products",
       "level": "MAJOR_EVENT",
-      "median_return": -0.24887695754773292,
+      "median_return": -0.24887697645876938,
       "path": "events/2020-03-20-building-products.html",
-      "score": 85.65505764152326
+      "score": 85.65505855200362
     },
     {
       "as_of": "2020-03-20",
       "headline": "Health Care Services fell 21.0% in 5 trading days",
       "industry": "Health Care Services",
       "level": "MAJOR_EVENT",
-      "median_return": -0.21004064596150274,
+      "median_return": -0.21004045840226915,
       "path": "events/2020-03-20-health-care-services.html",
-      "score": 84.38871342080566
+      "score": 84.38874959300321
     },
     {
       "as_of": "2020-03-20",
@@ -178,14 +142,14 @@
       "level": "MAJOR_EVENT",
       "median_return": -0.20934057154508745,
       "path": "events/2020-03-20-transaction-and-payment-processing-services.html",
-      "score": 89.7653361648487
+      "score": 89.7653632390295
     },
     {
       "as_of": "2020-03-20",
       "headline": "Multi-Family Residential REITs fell 28.3% in 5 trading days",
       "industry": "Multi-Family Residential REITs",
       "level": "MAJOR_EVENT",
-      "median_return": -0.2828034109009726,
+      "median_return": -0.2828034419846819,
       "path": "events/2020-03-20-multi-family-residential-reits.html",
       "score": 95.97845014983626
     },
@@ -194,81 +158,54 @@
       "headline": "Retail REITs fell 34.1% in 5 trading days",
       "industry": "Retail REITs",
       "level": "MAJOR_EVENT",
-      "median_return": -0.34065641105008926,
+      "median_return": -0.34065628516169666,
       "path": "events/2020-03-20-retail-reits.html",
-      "score": 97.46704300628714
+      "score": 97.46704083119238
     },
     {
       "as_of": "2020-04-03",
       "headline": "Diversified Banks fell 13.4% in 5 trading days",
       "industry": "Diversified Banks",
       "level": "INVESTIGATE",
-      "median_return": -0.13375204371600213,
+      "median_return": -0.1337517578435926,
       "path": "events/2020-04-03-diversified-banks.html",
-      "score": 70.3225816877192
+      "score": 70.32248360331452
     },
     {
       "as_of": "2021-07-20",
       "headline": "Oil & Gas Equipment & Services fell 10.4% in 5 trading days",
       "industry": "Oil & Gas Equipment & Services",
       "level": "INVESTIGATE",
-      "median_return": -0.10415751960140529,
+      "median_return": -0.10415742314729004,
       "path": "events/2021-07-20-oil-and-gas-equipment-and-services.html",
-      "score": 64.64346339962034
+      "score": 64.64341252911068
     },
     {
       "as_of": "2021-07-20",
       "headline": "Oil & Gas Refining & Marketing fell 11.2% in 5 trading days",
       "industry": "Oil & Gas Refining & Marketing",
       "level": "INVESTIGATE",
-      "median_return": -0.1121043937129923,
+      "median_return": -0.11210462856782777,
       "path": "events/2021-07-20-oil-and-gas-refining-and-marketing.html",
-      "score": 69.37541920790244
-    },
-    {
-      "as_of": "2021-12-16",
-      "headline": "Passenger Airlines fell 9.4% in 5 trading days",
-      "industry": "Passenger Airlines",
-      "level": "INVESTIGATE",
-      "median_return": -0.09355664207642911,
-      "path": "events/2021-12-16-passenger-airlines.html",
-      "score": 62.041420087413826
-    },
-    {
-      "as_of": "2022-01-07",
-      "headline": "Homebuilding fell 10.0% in 5 trading days",
-      "industry": "Homebuilding",
-      "level": "INVESTIGATE",
-      "median_return": -0.09954842774178208,
-      "path": "events/2022-01-07-homebuilding.html",
-      "score": 69.92641929818546
+      "score": 69.37549433332248
     },
     {
       "as_of": "2022-03-08",
       "headline": "Hotels, Resorts & Cruise Lines fell 10.1% in 5 trading days",
       "industry": "Hotels, Resorts & Cruise Lines",
       "level": "INVESTIGATE",
-      "median_return": -0.10060253143932418,
+      "median_return": -0.10060245202765306,
       "path": "events/2022-03-08-hotels-resorts-and-cruise-lines.html",
-      "score": 60.74035371225535
+      "score": 60.740375959987105
     },
     {
       "as_of": "2022-04-05",
-      "headline": "Semiconductors fell 9.5% in 5 trading days",
-      "industry": "Semiconductors",
+      "headline": "Semiconductor Materials & Equipment fell 11.1% in 5 trading days",
+      "industry": "Semiconductor Materials & Equipment",
       "level": "INVESTIGATE",
-      "median_return": -0.09509350777926906,
-      "path": "events/2022-04-05-semiconductors.html",
-      "score": 59.66599627044361
-    },
-    {
-      "as_of": "2022-04-05",
-      "headline": "Regional Banks fell 9.8% in 5 trading days",
-      "industry": "Regional Banks",
-      "level": "INVESTIGATE",
-      "median_return": -0.09837296422032527,
-      "path": "events/2022-04-05-regional-banks.html",
-      "score": 60.59362493917368
+      "median_return": -0.11106081557654474,
+      "path": "events/2022-04-05-semiconductor-materials-and-equipment.html",
+      "score": 65.87786111678054
     },
     {
       "as_of": "2022-05-18",
@@ -277,133 +214,115 @@
       "level": "MAJOR_EVENT",
       "median_return": -0.14269240230249614,
       "path": "events/2022-05-18-consumer-staples-merchandise-retail.html",
-      "score": 93.75908433940536
+      "score": 93.75909238710685
     },
     {
       "as_of": "2022-06-16",
       "headline": "Hotels, Resorts & Cruise Lines fell 20.2% in 5 trading days",
       "industry": "Hotels, Resorts & Cruise Lines",
       "level": "MAJOR_EVENT",
-      "median_return": -0.20221704457386247,
+      "median_return": -0.2022171580526259,
       "path": "events/2022-06-16-hotels-resorts-and-cruise-lines.html",
-      "score": 77.74933820176307
+      "score": 77.74932625703504
     },
     {
       "as_of": "2022-06-16",
       "headline": "Specialty Chemicals fell 16.0% in 5 trading days",
       "industry": "Specialty Chemicals",
       "level": "MAJOR_EVENT",
-      "median_return": -0.15973643466723592,
+      "median_return": -0.1597364956313735,
       "path": "events/2022-06-16-specialty-chemicals.html",
-      "score": 78.87496357331521
+      "score": 78.87496357974197
     },
     {
       "as_of": "2022-06-16",
       "headline": "Oil & Gas Exploration & Production fell 14.9% in 5 trading days",
       "industry": "Oil & Gas Exploration & Production",
       "level": "INVESTIGATE",
-      "median_return": -0.14938811608462432,
+      "median_return": -0.14938823549908586,
       "path": "events/2022-06-16-oil-and-gas-exploration-and-production.html",
-      "score": 70.77965873355853
+      "score": 70.77964860531223
     },
     {
       "as_of": "2022-06-24",
       "headline": "Oil & Gas Refining & Marketing fell 12.5% in 5 trading days",
       "industry": "Oil & Gas Refining & Marketing",
       "level": "MAJOR_EVENT",
-      "median_return": -0.12472638277612391,
+      "median_return": -0.12472624656954778,
       "path": "events/2022-06-24-oil-and-gas-refining-and-marketing.html",
-      "score": 81.66686126734336
+      "score": 81.66682602284706
     },
     {
       "as_of": "2022-07-01",
       "headline": "Semiconductor Materials & Equipment fell 12.0% in 5 trading days",
       "industry": "Semiconductor Materials & Equipment",
       "level": "INVESTIGATE",
-      "median_return": -0.11976344265255262,
+      "median_return": -0.1197636576352405,
       "path": "events/2022-07-01-semiconductor-materials-and-equipment.html",
-      "score": 72.25323103076789
+      "score": 72.2533130079513
     },
     {
       "as_of": "2022-09-27",
       "headline": "Oil & Gas Exploration & Production fell 11.9% in 5 trading days",
       "industry": "Oil & Gas Exploration & Production",
       "level": "INVESTIGATE",
-      "median_return": -0.11876525546641925,
+      "median_return": -0.11876517685532018,
       "path": "events/2022-09-27-oil-and-gas-exploration-and-production.html",
-      "score": 61.71180675791306
+      "score": 61.7117767101949
     },
     {
       "as_of": "2022-11-01",
       "headline": "Interactive Media & Services fell 13.8% in 5 trading days",
       "industry": "Interactive Media & Services",
       "level": "MAJOR_EVENT",
-      "median_return": -0.13752039600430865,
+      "median_return": -0.13752032265387726,
       "path": "events/2022-11-01-interactive-media-and-services.html",
-      "score": 85.01022590485437
+      "score": 85.01022262039896
     },
     {
       "as_of": "2023-03-14",
       "headline": "Life & Health Insurance fell 12.2% in 5 trading days",
       "industry": "Life & Health Insurance",
       "level": "MAJOR_EVENT",
-      "median_return": -0.12217683011074876,
+      "median_return": -0.1221770227204424,
       "path": "events/2023-03-14-life-and-health-insurance.html",
-      "score": 75.27576773846
+      "score": 75.27578054613028
     },
     {
       "as_of": "2023-03-14",
       "headline": "Diversified Banks fell 10.4% in 5 trading days",
       "industry": "Diversified Banks",
       "level": "INVESTIGATE",
-      "median_return": -0.10424076915740155,
+      "median_return": -0.10424109760247158,
       "path": "events/2023-03-14-diversified-banks.html",
-      "score": 72.06407915180536
+      "score": 72.06414457630679
     },
     {
       "as_of": "2023-03-14",
       "headline": "Regional Banks fell 20.3% in 5 trading days",
       "industry": "Regional Banks",
       "level": "MAJOR_EVENT",
-      "median_return": -0.20308867817951654,
+      "median_return": -0.2030885041986582,
       "path": "events/2023-03-14-regional-banks.html",
       "score": 100.0
-    },
-    {
-      "as_of": "2023-03-14",
-      "headline": "Investment Banking & Brokerage fell 8.3% in 5 trading days",
-      "industry": "Investment Banking & Brokerage",
-      "level": "INVESTIGATE",
-      "median_return": -0.08301453540829606,
-      "path": "events/2023-03-14-investment-banking-and-brokerage.html",
-      "score": 66.23834467696508
     },
     {
       "as_of": "2023-10-24",
       "headline": "Regional Banks fell 11.1% in 5 trading days",
       "industry": "Regional Banks",
       "level": "INVESTIGATE",
-      "median_return": -0.11065085174364447,
+      "median_return": -0.11065079839425446,
       "path": "events/2023-10-24-regional-banks.html",
-      "score": 67.34479333557117
+      "score": 67.3447815349301
     },
     {
       "as_of": "2024-08-05",
       "headline": "Hotels, Resorts & Cruise Lines fell 11.0% in 5 trading days",
       "industry": "Hotels, Resorts & Cruise Lines",
       "level": "INVESTIGATE",
-      "median_return": -0.11021465129166202,
+      "median_return": -0.1102147129117938,
       "path": "events/2024-08-05-hotels-resorts-and-cruise-lines.html",
-      "score": 66.78486433333296
-    },
-    {
-      "as_of": "2025-01-28",
-      "headline": "Semiconductor Materials & Equipment fell 8.5% in 5 trading days",
-      "industry": "Semiconductor Materials & Equipment",
-      "level": "INVESTIGATE",
-      "median_return": -0.08479986299926795,
-      "path": "events/2025-01-28-semiconductor-materials-and-equipment.html",
-      "score": 60.66822594759059
+      "score": 66.78488939258935
     },
     {
       "as_of": "2025-03-12",
@@ -412,43 +331,25 @@
       "level": "INVESTIGATE",
       "median_return": -0.10996989745241376,
       "path": "events/2025-03-12-hotels-resorts-and-cruise-lines.html",
-      "score": 67.23998779933007
+      "score": 67.23999436222807
     },
     {
       "as_of": "2025-04-09",
       "headline": "Oil & Gas Exploration & Production fell 13.8% in 5 trading days",
       "industry": "Oil & Gas Exploration & Production",
       "level": "INVESTIGATE",
-      "median_return": -0.13751170093220533,
+      "median_return": -0.13751169056066426,
       "path": "events/2025-04-09-oil-and-gas-exploration-and-production.html",
-      "score": 72.39335609451484
+      "score": 72.39334334723692
     },
     {
-      "as_of": "2025-04-09",
-      "headline": "Regional Banks fell 9.6% in 5 trading days",
-      "industry": "Regional Banks",
+      "as_of": "2026-06-22",
+      "headline": "Oil & Gas Equipment & Services fell 11.2% in 5 trading days",
+      "industry": "Oil & Gas Equipment & Services",
       "level": "INVESTIGATE",
-      "median_return": -0.09618198258909488,
-      "path": "events/2025-04-09-regional-banks.html",
-      "score": 61.18170405305575
-    },
-    {
-      "as_of": "2025-04-09",
-      "headline": "Multi-Family Residential REITs fell 9.0% in 5 trading days",
-      "industry": "Multi-Family Residential REITs",
-      "level": "INVESTIGATE",
-      "median_return": -0.09030950594640486,
-      "path": "events/2025-04-09-multi-family-residential-reits.html",
-      "score": 67.22600204003172
-    },
-    {
-      "as_of": "2026-05-07",
-      "headline": "Oil & Gas Exploration & Production fell 8.7% in 5 trading days",
-      "industry": "Oil & Gas Exploration & Production",
-      "level": "INVESTIGATE",
-      "median_return": -0.08665921965862489,
-      "path": "events/2026-05-07-oil-and-gas-exploration-and-production.html",
-      "score": 60.37700737088707
+      "median_return": -0.11186866631562131,
+      "path": "events/2026-06-22-oil-and-gas-equipment-and-services.html",
+      "score": 72.87758370464591
     },
     {
       "as_of": "2026-07-07",
@@ -457,7 +358,7 @@
       "level": "MAJOR_EVENT",
       "median_return": -0.2063225475742161,
       "path": "events/2026-07-07-semiconductor-materials-and-equipment.html",
-      "score": 90.55372607163973
+      "score": 90.55372576966413
     },
     {
       "as_of": "2026-07-28",
@@ -466,10 +367,10 @@
       "level": "MAJOR_EVENT",
       "median_return": -0.22412417032185972,
       "path": "events/2026-07-28-electronic-components.html",
-      "score": 86.52976279191762
+      "score": 86.529762493015
     }
   ],
   "last_run": "2026-09-02",
-  "params_version": "0.4.0-unvalidated",
+  "params_version": "0.5.0-fitted",
   "universe": 503
 }
