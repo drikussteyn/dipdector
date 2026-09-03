@@ -44,12 +44,13 @@ jobs:
       - name: Run scan
         env:
           ALERT_EMAIL:       ${{ secrets.ALERT_EMAIL }}
-          EMAIL_PROVIDER:    smtp
-          SMTP_HOST:         ${{ secrets.SMTP_HOST }}
-          SMTP_PORT:         ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME:     ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD:     ${{ secrets.SMTP_PASSWORD }}
-          SMTP_SENDER:       ${{ secrets.SMTP_SENDER }}
+          # Resend rather than Gmail SMTP: one API key, no app password, and
+          # the mail comes from the tool's own identity instead of a personal
+          # account. SMTPSender is still supported — set EMAIL_PROVIDER=smtp
+          # and the SMTP_* secrets to switch back.
+          EMAIL_PROVIDER:    resend
+          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM:       ${{ secrets.RESEND_FROM }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Derived, not a secret: Pages serves a project site at
           # https://<owner>.github.io/<repo>. This is what makes the links in
@@ -64,7 +65,7 @@ jobs:
           set +e
           python -m dipdector.daily \
             --provider yfinance \
-            --sender smtp \
+            --sender resend \
             --level INVESTIGATE \
             --state state/alert_state.json \
             --db state/dipdector.duckdb \

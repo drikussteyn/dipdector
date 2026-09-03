@@ -60,13 +60,26 @@ A minute later your archive is live at
 `https://<you>.github.io/dipdector/`. The workflow works out this URL by
 itself, so there is nothing to configure.
 
-### 3. Create a Gmail App Password
+### 3. Create a Resend account
 
-A normal Gmail password will not work here, and should never go in a config
-file anyway.
+Resend is a transactional email service — the kind that sends order
+confirmations and one-time codes. It means alerts arrive from the tool's own
+identity rather than your personal address, and setup is a single API key: no
+app password, no SMTP ports, no two-factor dance.
 
-Google Account → **Security** → turn on **2-Step Verification** → **App
-passwords** → create one for "Mail". You get a 16-character string.
+Sign up at [resend.com](https://resend.com) **using the same address you want
+alerts sent to**, then create an API key.
+
+That last part matters. Without verifying a domain of your own you send from
+`onboarding@resend.dev`, which will only deliver to the address registered on
+the Resend account. For a tool that emails exactly one person this costs
+nothing — but the two addresses have to match, and the app will tell you so
+in plain English if they don't.
+
+The free tier is 3,000 emails a month. This sends a handful a year.
+
+If you would rather use Gmail, `EMAIL_PROVIDER=smtp` with the `SMTP_*` secrets
+still works — see `.env.example`.
 
 ### 4. Add the secrets
 
@@ -75,12 +88,8 @@ secret**. Add these:
 
 | Secret | Value |
 |---|---|
-| `ALERT_EMAIL` | where alerts go |
-| `SMTP_HOST` | `smtp.gmail.com` |
-| `SMTP_PORT` | `587` |
-| `SMTP_USERNAME` | your Gmail address |
-| `SMTP_PASSWORD` | the 16-character App Password from step 3 |
-| `SMTP_SENDER` | your Gmail address |
+| `ALERT_EMAIL` | where alerts go — the same address as your Resend account |
+| `RESEND_API_KEY` | the key from step 3 |
 | `ANTHROPIC_API_KEY` | your Claude Console API key (optional) |
 
 Without `ANTHROPIC_API_KEY` everything still works; reports say "cause not

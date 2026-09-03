@@ -131,7 +131,17 @@ class SMTPSender:
 
 
 class ResendSender:
-    """Resend's HTTP API. Free tier is generous and it works from CI runners."""
+    """
+    Resend's HTTP API. Preferred over SMTP: one key, no app password, no
+    ports for a host to block, and the mail carries the tool's own identity
+    rather than a personal account's.
+
+    On the free tier without a verified domain you send from
+    onboarding@resend.dev, which may only deliver to the address registered
+    on the Resend account. That is not a constraint here — this tool emails
+    exactly one person, its owner — but it does mean ALERT_EMAIL and the
+    Resend account address have to match.
+    """
 
     name = "resend"
 
@@ -160,6 +170,16 @@ class ResendSender:
                           headers={"Authorization": f"Bearer {self.api_key}",
                                    "Content-Type": "application/json"},
                           json=payload)
+        if r.status_code == 403 and "resend.dev" in self.from_addr:
+            # By far the likeliest misconfiguration, and the API's own message
+            # does not say which two addresses have to match.
+            raise RuntimeError(
+                f"Resend refused to deliver to {to}. Sending from "
+                f"{self.from_addr} works only for the address registered on "
+                f"the Resend account, so ALERT_EMAIL must be that same "
+                f"address. Either point ALERT_EMAIL at it, or verify a domain "
+                f"in Resend and set RESEND_FROM to an address on it. "
+                f"API said: {r.text[:200]}")
         if r.status_code >= 300:
             raise RuntimeError(f"Resend rejected the message: "
                                f"{r.status_code} {r.text[:300]}")
