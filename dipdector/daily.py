@@ -169,7 +169,17 @@ def run(args) -> int:
             keywords_for(a.industry,
                          [c.ticker for c in a.metrics.companies]),
             cutoff, 10)
-        event = classify_event(a.industry, a, arts)
+        # Let the model research the cause itself, but only when this is a
+        # live alert. Searching the web about an old decline returns pieces
+        # written after it — including ones that say how it resolved — and a
+        # replay that reads those is measuring hindsight, not detection.
+        live = (dt.date.today() - as_of).days <= 7
+        event = classify_event(a.industry, a, arts, allow_search=live)
+        if live:
+            print(f"    {a.industry}: cause analysis with web search")
+        else:
+            print(f"    {a.industry}: replay of {as_of} — search disabled "
+                  f"to avoid hindsight")
         cands = score_candidates(a.metrics, truncated.close, CONFIG, event)
         store.record_event(a, truncated, event, cands, arts)
         events_for_report.append({

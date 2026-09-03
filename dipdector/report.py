@@ -180,6 +180,16 @@ th.num{font-family:inherit}
   flex:0 0 16px}
 .cand .r .t{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:15px}
 .cand .r .nm{color:var(--muted);font-size:14px;flex:1}
+.cand .r .cap{font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--muted)}
+.srcs{margin-top:18px;padding-top:14px;border-top:1px solid var(--rule-soft)}
+.srcs .srch{font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:8px}
+.srcs ul{margin:0;padding-left:18px}
+.srcs li{font-size:13.5px;margin-bottom:5px;line-height:1.45}
+.srcs a{color:var(--judge-mark);text-decoration:none}
+.srcs a:hover{text-decoration:underline}
 .cand .r .s{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:500}
 .cand .why{margin:5px 0 0 27px;font-size:13.5px;color:var(--muted)}
 .cand ul{margin:7px 0 0 27px;padding:0 0 0 15px;font-size:13px;color:var(--muted)}
@@ -314,7 +324,16 @@ pipeline. Nothing on this page is a real market observation.</div>
             <div><b>{{ e.event.structural_risk }}</b><span>Structural risk</span></div>
             <div><b>{{ e.event.continuation_risk }}</b><span>Could fall further</span></div>
           </div>
-          {% if e.event.unresolved_questions %}
+          {% if e.event.sources %}
+      <div class="srcs">
+        <div class="srch">Sources the analysis retrieved
+          ({{ e.event.sources|length }})</div>
+        <ul>{% for src in e.event.sources[:12] %}
+          <li><a href="{{ src.url }}" rel="noopener noreferrer"
+                 target="_blank">{{ src.title }}</a></li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+      {% if e.event.unresolved_questions %}
           <p style="margin:16px 0 0"><b>Couldn't determine:</b>
             {{ e.event.unresolved_questions|join('; ') }}</p>
           {% endif %}

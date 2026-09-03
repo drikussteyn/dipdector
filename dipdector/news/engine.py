@@ -21,7 +21,8 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
-from dataclasses import dataclass, field, asdict
+import re
+from dataclasses import dataclass, field, asdict, replace
 from typing import List, Optional, Protocol
 
 # Claude Sonnet 5 is both newer and cheaper than the Sonnet 4.6 this was
@@ -30,6 +31,29 @@ from typing import List, Optional, Protocol
 # `or` rather than a get() default: an unset GitHub Actions variable is
 # passed through as an empty string, not as an absent key.
 MODEL = os.environ.get("DIPDECTOR_MODEL") or "claude-sonnet-5"
+
+SEARCH_INSTRUCTION = """
+Search is available to you, and you should use it. The supplied articles come
+from one free feed, they are thin, and they skew towards low-tier aggregators.
+
+Run two or three searches aimed at the cause of this specific decline — the
+industry name with words like "stocks fall", "selloff", "why", the date, and
+the names of the largest companies involved. Prefer wire services, national
+papers and trade press over aggregators and commentary.
+
+These are US-listed S&P 500 companies. Searching an industry name alone will
+surface other markets — a query about railroads returns Indian rail stocks,
+which have nothing to do with these — so anchor every search on the tickers
+or company names given to you, and disregard results about other exchanges.
+Ignore "best stocks to buy" listicles entirely; they are never evidence about
+a specific day's move.
+
+If your searches contradict the supplied articles, say so in the reasoning and
+weight the better-sourced account. If they turn up nothing that explains the
+decline, that is a real finding: report it as unexplained rather than
+stretching a weak story to fit. An industry can fall hard for reasons that are
+not yet public, and saying so is more useful than a confident guess.
+"""
 
 CAUSE_TAXONOMY = [
     "geopolitical conflict", "oil/fuel shock", "recession/economic slowdown",
@@ -83,6 +107,8 @@ class EventAssessment:
     n_articles_considered: int = 0
     generated_at: Optional[dt.datetime] = None
     is_stub: bool = False
+    searched: bool = False
+    sources: List[dict] = field(default_factory=list)   # {title, url}
 
     def to_dict(self):
         d = asdict(self)
@@ -182,8 +208,9 @@ statistics. Your job is to explain WHY an industry declined, and to judge whethe
 the cause looks temporary or structural.
 
 Hard rules:
-- Work only from the articles provided. Do not use outside knowledge of what
-  happened next, and do not introduce facts that are not in the articles.
+- Work only from the evidence in front of you: the articles supplied, plus
+  anything you retrieve if search is available to you. Do not introduce facts
+  from memory, and do not use knowledge of what happened after this date.
 - Never recompute or dispute the market statistics. They are measurements; you
   are interpreting them, not checking them.
 - If the articles do not explain the decline, say so plainly and return a low
@@ -257,15 +284,77 @@ def stub(reason: str, n_articles: int = 0) -> EventAssessment:
     )
 
 
+def _strip_citation_tags(text: str) -> str:
+    """
+    Remove the <cite index="..."> markup search returns inside prose.
+
+    The citation itself is worth keeping — the sentence it wraps is the
+    claim — but the tag is machine syntax and would reach the reader as
+    literal angle brackets in the report.
+    """
+    if not text:
+        return text
+    return re.sub(r"</?cite[^>]*>", "", text)
+
+
+def _payload(industry, assessment, articles, allow_search: bool) -> dict:
+    """The request body. Search is a server tool, so no client-side loop."""
+    system = SYSTEM_PROMPT + (SEARCH_INSTRUCTION if allow_search else "")
+    body = {
+        "model": MODEL, "max_tokens": 8000, "system": system,
+        "messages": [{"role": "user",
+                      "content": _build_user_prompt(industry, assessment,
+                                                    articles)}],
+    }
+    if allow_search:
+        body["tools"] = [{"type": "web_search_20260209", "name": "web_search",
+                          "max_uses": 6}]
+    return body
+
+
+def _collect_sources(content: List[dict]) -> List[dict]:
+    """Titles and URLs of whatever the model actually retrieved."""
+    out, seen = [], set()
+    for block in content:
+        if block.get("type") != "web_search_tool_result":
+            continue
+        results = block.get("content")
+        # An error comes back as an object, a success as a list. Server tools
+        # do not raise — they return HTTP 200 with an error payload — so this
+        # has to branch on the shape rather than trust it.
+        if not isinstance(results, list):
+            continue
+        for r in results:
+            url = r.get("url")
+            if url and url not in seen:
+                seen.add(url)
+                out.append({"title": (r.get("title") or url)[:200], "url": url})
+    return out
+
+
 def classify_event(industry: str, assessment, articles: List[Article],
-                   api_key: Optional[str] = None) -> EventAssessment:
-    """Call Claude to cluster and classify. Falls back to an explicit stub."""
+                   api_key: Optional[str] = None,
+                   allow_search: bool = False) -> EventAssessment:
+    """
+    Call Claude to cluster and classify. Falls back to an explicit stub.
+
+    `allow_search` lets the model research the decline itself rather than
+    depending on one thin free feed. It MUST stay off for historical replays:
+    searching the web about a 2020 crash returns pieces written afterwards,
+    including ones that say how it resolved, and a backtest that reads those
+    is measuring hindsight. It is safe for a live alert because there is no
+    "afterwards" yet.
+    """
 
     key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-    if not key or not articles:
-        reason = ("No ANTHROPIC_API_KEY configured." if not key
-                  else "No articles retrieved for this industry and window.")
-        return stub(reason, len(articles))
+    if not key:
+        return stub("No ANTHROPIC_API_KEY configured.", len(articles))
+    if not articles and not allow_search:
+        # With search available an empty feed is not a dead end — the model
+        # can go and find the cause itself, which is the whole point of
+        # giving it the tool. Without search there is nothing to reason from.
+        return stub("No articles retrieved for this industry and window, and "
+                    "web search was not available for this run.", 0)
 
     import requests
 
@@ -286,19 +375,18 @@ def classify_event(industry: str, assessment, articles: List[Article],
             # whole budget and the reply came back with 1999 thinking tokens
             # and an empty answer, which parsed as a failure and degraded a
             # genuine alert to "cause not determined".
-            json={"model": MODEL, "max_tokens": 8000, "system": SYSTEM_PROMPT,
-                  "messages": [{"role": "user",
-                                "content": _build_user_prompt(
-                                    industry, assessment, articles)}]},
-            timeout=90,
+            json=_payload(industry, assessment, articles, allow_search),
+            timeout=240 if allow_search else 90,
         )
         r.raise_for_status()
-        text = "".join(b.get("text", "") for b in r.json()["content"]
-                       if b["type"] == "text")
+        body = r.json()
+        content = body.get("content", [])
+        text = "".join(b.get("text", "") for b in content
+                       if b.get("type") == "text")
         if not text.strip():
             # Distinct from malformed JSON, and worth naming separately: the
             # model reasoned up to the ceiling without producing an answer.
-            stop = r.json().get("stop_reason")
+            stop = body.get("stop_reason")
             raise RuntimeError(
                 f"the model returned reasoning but no answer "
                 f"(stop_reason={stop}); max_tokens may be too low")
@@ -309,7 +397,9 @@ def classify_event(industry: str, assessment, articles: List[Article],
                      f"({type(exc).__name__}: {exc}).", len(articles))
 
     try:
-        return _assessment_from(payload, len(articles))
+        ev = _assessment_from(payload, len(articles))
+        sources = _collect_sources(content)
+        return replace(ev, searched=bool(sources), sources=sources)
     except Exception as exc:                 # noqa: BLE001
         return stub(f"Cause analysis returned an unreadable payload "
                      f"({type(exc).__name__}: {exc}).", len(articles))
@@ -318,14 +408,14 @@ def classify_event(industry: str, assessment, articles: List[Article],
 def _assessment_from(payload: dict, n_articles: int) -> EventAssessment:
     """Map the model's JSON onto the dataclass. Raises if the shape is wrong."""
     return EventAssessment(
-        title=payload["title"],
+        title=_strip_citation_tags(payload["title"]),
         causes=payload.get("causes", []),
-        causal_chain=payload.get("causal_chain", ""),
+        causal_chain=_strip_citation_tags(payload.get("causal_chain", "")),
         temporary_confidence=int(payload.get("temporary_confidence", 0)),
         structural_risk=int(payload.get("structural_risk", 0)),
         severity=int(payload.get("severity", 0)),
         continuation_risk=int(payload.get("continuation_risk", 0)),
-        reasoning=payload.get("reasoning", ""),
+        reasoning=_strip_citation_tags(payload.get("reasoning", "")),
         evidence_article_ids=payload.get("evidence_article_ids", []),
         unresolved_questions=payload.get("unresolved_questions", []),
         n_articles_considered=n_articles,
