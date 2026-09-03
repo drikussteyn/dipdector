@@ -12,7 +12,7 @@ just fall together, and is that unusual?* — and hands you the evidence.
 ## What you get
 
 **A daily scan.** Every weekday after the US close, GitHub runs the detector
-over the whole S&P 500 — 503 companies, grouped into their GICS sub-industries.
+over the whole S&P 500 — 502 companies, grouped into their industries.
 Most days nothing fires and you hear nothing.
 
 **An email when something does.** Short and plain: what fell, how far, how
@@ -145,24 +145,46 @@ preview one.
 Measured over the full index, with thresholds derived from a 36-year study
 rather than assumed (see *Where the thresholds come from* below):
 
-**It fires 3.8 times a year.** Under ~1 would be too tight to learn from; over
+**It fires 4.1 times a year.** Under ~1 would be too tight to learn from; over
 ~15 would make it a screener.
 
 **The bounce is real.** Entering three days after each alert: 6-month median
-+18.6%, 12-month median +35.5% (92% of the time positive). Every one of the 38
-events with a two-year window recovered to its pre-shock level, median 50
-trading days. At 12 months even the 10th-percentile outcome was positive
-(+3.2%) — the worst decile still made money.
++16.1%, 12-month median +33.0% (88% of the time positive). Every one of the 40
+events with a two-year window recovered to its pre-shock level, median 52
+trading days.
 
-**The median event keeps falling another 6.3% after the alert**, worst case
-45%. Detection is not timing, and this is the number that decides whether a
+**The median event keeps falling another 9.3% after the alert**, worst case
+59%. Detection is not timing, and this is the number that decides whether a
 position is holdable.
 
 **Survivorship bias is live, and it inflates everything above.** The universe
 is today's S&P 500 applied to every historical date, so a company that fell and
-never recovered left the index and is absent by construction. Fixing it needs
-point-in-time membership data. Treat these figures as directionally right and
-numerically optimistic.
+never recovered left the index and is absent by construction.
+
+The March 2023 banking event in the archive is measured on six surviving banks.
+Silicon Valley Bank, Signature Bank and First Republic were all S&P 500 members
+that week and all three failed. They are not in the numbers. That is why
+recovery reads 100%.
+
+Fixing this needs a feed carrying historical constituents **and** prices for
+delisted securities, and the free feed has neither. Worse than missing: dead
+tickers get recycled. `SBNY` returns bars beginning August 2024 though
+Signature Bank failed in March 2023, and `CC` returns a decade though Circuit
+City died in 2009 — those series belong to different companies, and splicing
+them into a historical event would fabricate market data. The app refuses to.
+Treat every figure here as directionally right and numerically optimistic.
+
+## Where the universe comes from
+
+Constituents come from the SPDR S&P 500 ETF's own daily holdings file,
+published by State Street, who run the fund — not a description of the index
+but the list of what the fund actually holds, stamped with the date it was
+struck. Classification comes from the same price provider the app already uses,
+whose taxonomy groups at the level that matters: *Semiconductors*, *Banks -
+Regional*, *Airlines*, *Railroads* — companies that genuinely compete.
+
+Nothing in the universe comes from a crowd-edited source, and a test asserts
+it stays that way.
 
 ## Where the thresholds come from
 
@@ -191,7 +213,10 @@ depth of a fall is a real signal; its speed is not.
 Only the two replicated findings were changed. Validated afterwards on the live
 engine — not on the panel — over 2016–2026: 4.9 → 3.8 events/year, 12-month
 median +31.7% → +35.5%, hit rate 82% → 92%, recovery 98% → 100%, and further
-fall after entry −11.0% → −6.3%.
+fall after entry −11.0% → −6.3%. Re-measured after the universe moved to
+primary sources: 4.1 events/year, 12-month median +33.0% at an 88% hit rate,
+40 of 40 recovered — the conclusions survive the change of classification,
+which is itself a check on them.
 
 The thresholds rest on those rankings, which survivorship bias does not
 reorder, rather than on the absolute returns, which it inflates. Hence

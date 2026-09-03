@@ -76,7 +76,7 @@ def main():
           + ("   ⚠ SYNTHETIC — pipeline test only" if frame.synthetic else ""))
     print(f"Period          {start} → {end}")
     print(f"Universe        {len(tickers)-2} companies, "
-          f"{len(cp.industries(end))} sub-industries")
+          f"{len(cp.industries(end))} industries")
     print(f"Parameters      {CONFIG.params_version}")
     print(f"Alert level     {a.level}, {a.cooldown}-day cooldown")
     print("\n⚠ Survivorship bias: the universe uses current membership for all "
