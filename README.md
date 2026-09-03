@@ -27,10 +27,12 @@ email from two years ago still opens the report as it was written that day.
 **An archive.** [`docs/index.html`](docs/index.html) lists every event ever
 detected, newest first.
 
-The archive ships already populated with **41 real events from 2016–2026**,
+The archive ships already populated with **25 real events from 2016–2026**,
 backfilled from live market data — including the March 2023 regional banking
-collapse (score 100/100), the February–March 2020 crash across eleven separate
-industries, and the August 2024 unwind.
+collapse, the February–March 2020 crash across multiple industries, and the
+April 2025 tariff selloff. Fewer events than earlier versions produced, and
+deliberately so: the thresholds now require a group to fall together rather
+than letting a few collapsing names carry a median.
 
 ---
 
@@ -140,20 +142,36 @@ preview one.
 
 ---
 
+## What it looks for, exactly
+
+> **A group of companies where at least 80% each fell 10% or more over five
+> trading days, and the group's median fell 12% or more** — provided the move
+> is unusual for that industry and it trailed the S&P 500.
+
+Every part of that is doing a job. The median says the industry fell hard. The
+80%-at-10% says they fell *together* — without it, four collapsing names and
+five flat ones can drag a median past the line, which is a handful of
+disasters rather than an industry-wide event. The comparison to the S&P
+separates an industry problem from a bad day for everything.
+
+Only after an industry clears all of that does the tool fetch news, work out
+the cause, and rank the companies that fell — largest first, with their scores.
+
 ## What the numbers actually say
 
-Measured over the full index, with thresholds derived from a 36-year study
-rather than assumed (see *Where the thresholds come from* below):
+Measured over the full index, thresholds derived from a 36-year study rather
+than assumed (see *Where the thresholds come from*):
 
-**It fires 4.1 times a year.** Under ~1 would be too tight to learn from; over
+**It fires 2.3 times a year.** Under ~1 would be too tight to learn from; over
 ~15 would make it a screener.
 
 **The bounce is real.** Entering three days after each alert: 6-month median
-+16.1%, 12-month median +33.0% (88% of the time positive). Every one of the 40
-events with a two-year window recovered to its pre-shock level, median 52
-trading days.
++22.3%, 12-month median +59.6% (92% of the time positive). All 24 events with
+a two-year window recovered to their pre-shock level, median 54 trading days.
+At 12 months even the worst decile returned +11.7%, and the single worst event
+was −7.7%.
 
-**The median event keeps falling another 9.3% after the alert**, worst case
+**The median event keeps falling another 5.5% after the alert**, worst case
 59%. Detection is not timing, and this is the number that decides whether a
 position is holdable.
 
@@ -161,10 +179,10 @@ position is holdable.
 is today's S&P 500 applied to every historical date, so a company that fell and
 never recovered left the index and is absent by construction.
 
-The March 2023 banking event in the archive is measured on six surviving banks.
-Silicon Valley Bank, Signature Bank and First Republic were all S&P 500 members
-that week and all three failed. They are not in the numbers. That is why
-recovery reads 100%.
+The March 2023 banking event in the archive is measured on the banks that
+survived. Silicon Valley Bank, Signature Bank and First Republic were all
+S&P 500 members that week and all three failed. They are not in the numbers.
+That is why recovery reads 100%.
 
 Fixing this needs a feed carrying historical constituents **and** prices for
 delisted securities, and the free feed has neither. Worse than missing: dead
@@ -214,9 +232,22 @@ Only the two replicated findings were changed. Validated afterwards on the live
 engine — not on the panel — over 2016–2026: 4.9 → 3.8 events/year, 12-month
 median +31.7% → +35.5%, hit rate 82% → 92%, recovery 98% → 100%, and further
 fall after entry −11.0% → −6.3%. Re-measured after the universe moved to
-primary sources: 4.1 events/year, 12-month median +33.0% at an 88% hit rate,
-40 of 40 recovered — the conclusions survive the change of classification,
-which is itself a check on them.
+primary sources, the whole study was re-run on them rather than assumed to
+carry over. Depth of fall confirmed stable at +0.90 and member-decline at
++1.00, in the same order as before — the conclusions survived the change of
+source, which is a check on them rather than a restatement.
+
+Two thresholds moved as a result: the industry median to −12%, and the level
+at which a member counts as falling from −5% to −10%. The second matters more
+than it sounds. It does not filter fewer events — at an unchanged 2.3 per year
+it changes *which* events qualify, replacing groups where a few names
+collapsed with groups that fell together. Every outcome improved: 12-month
+median +48.9% → +59.6%, hit rate 87% → 92%, worst decile −4.2% → +11.7%.
+
+The window stays at 5 days on weaker evidence than the depth, and that is
+worth stating plainly. At −15% its rank correlation is negative: 5 days ranks
+1st then 2nd across the two eras, while 2 days ranks 5th then 1st. Five is the
+most *consistent* window, not a proven optimum.
 
 The thresholds rest on those rankings, which survivorship bias does not
 reorder, rather than on the absolute returns, which it inflates. Hence
