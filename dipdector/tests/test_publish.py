@@ -163,3 +163,35 @@ def test_quiet_run_updates_last_scan_without_adding_events(tmp_path, event,
     assert record["last_run"] == "2026-07-15"
     assert len(record["events"]) == 1
     assert "2026-07-15" in open(os.path.join(root, "index.html")).read()
+
+
+# --- permanence: an emailed URL must keep resolving -----------------------
+
+def test_republishing_does_not_remove_other_events(tmp_path, event, run_meta):
+    """
+    The promise is that a URL mailed today still resolves years later. It was
+    broken once: reclassifying the universe renamed an industry, its slug
+    changed with it, and a rebuild that wiped the directory took every
+    already-sent link with it.
+    """
+    root = str(tmp_path / "site")
+    publish([event], run_meta, root, None, 35)
+    first = os.listdir(os.path.join(root, "events"))
+
+    publish([event], {**run_meta, "as_of": "2026-07-15"}, root, None, 35)
+
+    after = os.listdir(os.path.join(root, "events"))
+    assert set(first) <= set(after), "publishing removed an existing report"
+    assert len(after) == len(first) + 1
+
+
+def test_a_404_page_is_written(tmp_path, event, run_meta):
+    """A stale link should explain itself and point at the archive."""
+    root = str(tmp_path / "site")
+    publish([event], run_meta, root, None, 35)
+
+    path = os.path.join(root, "404.html")
+    assert os.path.exists(path)
+    html = open(path).read()
+    assert "archive" in html.lower()
+    assert 'href="/dipdector/"' in html

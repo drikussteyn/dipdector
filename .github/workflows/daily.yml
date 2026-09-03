@@ -44,13 +44,22 @@ jobs:
       - name: Run scan
         env:
           ALERT_EMAIL:       ${{ secrets.ALERT_EMAIL }}
-          # Resend rather than Gmail SMTP: one API key, no app password, and
-          # the mail comes from the tool's own identity instead of a personal
-          # account. SMTPSender is still supported — set EMAIL_PROVIDER=smtp
-          # and the SMTP_* secrets to switch back.
-          EMAIL_PROVIDER:    resend
-          RESEND_API_KEY:    ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM:       ${{ secrets.RESEND_FROM }}
+          # SMTP from a dedicated sending account, not Resend. Resend's
+          # free tier sends from onboarding@resend.dev, an address shared by
+          # every unverified account on the platform, and Gmail filed every
+          # alert as spam. For a detector that fires about twice a year that
+          # is the worst possible failure: you do not go looking in spam for
+          # a warning you did not know was coming.
+          #
+          # ResendSender is still supported — set EMAIL_PROVIDER=resend and
+          # RESEND_API_KEY to switch back, and it is the better choice once a
+          # domain is verified.
+          EMAIL_PROVIDER:    smtp
+          SMTP_HOST:         ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:         ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME:     ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD:     ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SENDER:       ${{ secrets.SMTP_SENDER }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Optional repository variable (Settings -> Variables, not Secrets —
           # a model id is not a secret). Unset falls back to the code default.
@@ -68,7 +77,7 @@ jobs:
           set +e
           python -m dipdector.daily \
             --provider yfinance \
-            --sender resend \
+            --sender smtp \
             --level INVESTIGATE \
             --state state/alert_state.json \
             --db state/dipdector.duckdb \

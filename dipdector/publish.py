@@ -190,6 +190,66 @@ here the first time an industry meets every trigger condition.</div>
 
 
 # --------------------------------------------------------------------------
+# 404
+# --------------------------------------------------------------------------
+
+NOT_FOUND = Template(autoescape=True, source="""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>DipDector — report not found</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light only;--paper:#F7F7F3;--panel:#ECECE6;--ink:#16181B;
+  --muted:#565B62;--rule:#D8D8D1}
+*{box-sizing:border-box}
+html{background:var(--paper);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-size:16px;line-height:1.6;
+  font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:64px 22px 100px}
+.brand{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted)}
+h1{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:31px;
+  line-height:1.25;margin:12px 0 0}
+p{color:var(--muted);margin:16px 0 0;max-width:52ch}
+.box{margin:30px 0 0;padding:18px 20px;background:var(--panel);font-size:15px;
+  color:var(--ink)}
+a.btn{display:inline-block;margin-top:26px;padding:12px 22px;background:var(--ink);
+  color:var(--paper);text-decoration:none;border-radius:4px;font-size:15px}
+a.btn:hover{opacity:.88}
+footer{margin-top:52px;padding-top:18px;border-top:1px solid var(--rule);
+  font-size:12.5px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="brand">DipDector</div>
+<h1>That report isn't here any more</h1>
+<p>The link is valid but the page it pointed at has moved. This happens when
+the industry classification changes and a report's address changes with it —
+an early alert about "Regional Banks" now lives under "Banks - Regional".</p>
+<div class="box">Every event this detector has found is in the archive, newest
+first. The one you were looking for is almost certainly there under a slightly
+different name.</div>
+<a class="btn" href="/dipdector/">Open the archive &rarr;</a>
+<footer>Research output. A detected shock is not a reason to buy anything.</footer>
+</div></body></html>""")
+
+
+def write_not_found(root: str) -> None:
+    """
+    GitHub Pages serves this for any unmatched path.
+
+    publish.py promises that a URL mailed today still resolves years later,
+    and reclassifying the universe broke that promise once already: renaming
+    an industry renames its slug, and every link already sent goes dead. The
+    archive is the durable entry point, so a stale link should land somewhere
+    that explains itself and points there, not on a bare 404.
+    """
+    with open(os.path.join(root, "404.html"), "w") as f:
+        f.write(NOT_FOUND.render())
+
+# --------------------------------------------------------------------------
 # Reading and writing the index record
 # --------------------------------------------------------------------------
 
@@ -243,6 +303,7 @@ def rebuild_index(root: str) -> str:
         f.write(html)
     # Pages runs Jekyll by default, which would skip anything underscore-prefixed.
     open(os.path.join(root, ".nojekyll"), "a").close()
+    write_not_found(root)
     return html
 
 

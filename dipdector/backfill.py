@@ -9,6 +9,13 @@ first entry appears three months after you deploy it tells you nothing about
 whether the thing works, whereas an archive that already contains the March
 2023 regional-bank collapse and the February 2020 crash is inspectable today.
 
+DO NOT delete the publish directory before running this. Every report URL
+that has ever been emailed must keep resolving — that is the whole point of a
+permanent page per event — and wiping the directory breaks every link already
+sent. Backfilling is additive: it overwrites the pages it regenerates and
+leaves the rest alone. A page from an earlier ruleset is not stale, it is what
+was true under the thresholds of its day, and it says so in its own footer.
+
 Two honest limits, both printed on every run:
 
   - No cause analysis. Free news feeds do not serve articles from 2016, and
