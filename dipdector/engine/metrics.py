@@ -40,6 +40,7 @@ class CompanyMetrics:
     trailing_vol: Optional[float] = None
     volume_z: Optional[float] = None
     dollar_volume: Optional[float] = None
+    market_cap: Optional[float] = None
     data_coverage: float = 1.0
 
     @property
@@ -201,6 +202,7 @@ def compute_company_metrics(
         name=company.name,
         industry=company.industry,
         sub_industry=company.sub_industry,
+        market_cap=company.market_cap,
     )
     for w in windows:
         r = _window_return(px, w)

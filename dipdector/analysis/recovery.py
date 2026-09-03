@@ -2,7 +2,16 @@
 Recovery Candidate Score.
 
 DEVLOG s.19: 0-100, higher means better positioned to recover under the
-analysed event. Must NOT simply reward the largest company. Must explain itself.
+analysed event. Must explain itself.
+
+The devlog's rule was "must NOT simply reward the largest company", and the
+word doing the work there is *simply*. Scale is not a proxy for quality and
+must not be the ranking — but it is real evidence about survival, which is the
+question this tool actually asks: an industry-wide shock that a large,
+established company is likely to outlast is the whole thesis, and a small one
+in the same industry may not be there when the recovery arrives. So scale is
+ONE input of six, weighted below historical resilience, and never a tiebreak
+on its own.
 
 DEVLOG s.7 of the philosophy section: "The strongest candidate is not
 necessarily the company that fell the most." So depth of decline is deliberately
@@ -46,6 +55,7 @@ class RecoveryCandidate:
     factors: List[RecoveryFactor]
     coverage: float
     caveats: List[str] = field(default_factory=list)
+    market_cap: Optional[float] = None
 
     def explain(self) -> List[str]:
         return [f"{f.name}: {f.reason}" for f in
@@ -98,6 +108,8 @@ def score_candidates(industry: IndustryMetrics, close: pd.DataFrame,
     peer_vol = float(np.median(vols)) if vols else None
     dvs = [c.dollar_volume for c in industry.companies if c.dollar_volume]
     peer_dv = float(np.median(dvs)) if dvs else None
+    caps = [c.market_cap for c in industry.companies if c.market_cap]
+    peer_cap = float(np.median(caps)) if caps else None
 
     for cm in industry.companies:
         factors: List[RecoveryFactor] = []
@@ -151,7 +163,17 @@ def score_candidates(industry: IndustryMetrics, close: pd.DataFrame,
                 f"Traded {ratio:.1f}x the industry median dollar volume. Liquid "
                 f"names tend to re-rate first when sentiment turns."))
 
-        # 5. Relative stability.
+        # 5. Company scale.
+        if cm.market_cap and peer_cap:
+            rel_cap = cm.market_cap / peer_cap
+            factors.append(RecoveryFactor(
+                "company_scale", _ramp(np.log10(max(rel_cap, 0.01)), -1, 1), 0.12,
+                f"Market capitalisation is {rel_cap:.1f}x the industry median "
+                f"(${cm.market_cap/1e9:.0f}bn). Size is not quality, but a "
+                f"larger balance sheet is more likely to outlast an "
+                f"industry-wide downturn than a smaller one."))
+
+        # 6. Relative stability.
         if cm.trailing_vol and peer_vol:
             rel_vol = cm.trailing_vol / peer_vol
             factors.append(RecoveryFactor(
@@ -172,6 +194,7 @@ def score_candidates(industry: IndustryMetrics, close: pd.DataFrame,
 
         out.append(RecoveryCandidate(
             ticker=cm.ticker, name=cm.name, score=round(float(score), 1),
+            market_cap=cm.market_cap,
             factors=factors, coverage=rc.coverage, caveats=caveats,
         ))
 

@@ -375,6 +375,7 @@ pipeline. Nothing on this page is a real market observation.</div>
       <div class="cand">
         <div class="r"><span class="i">{{ loop.index }}</span>
           <span class="t">{{ c.ticker }}</span><span class="nm">{{ c.name }}</span>
+          {% if c.market_cap %}<span class="cap">{{ c.cap_label }}</span>{% endif %}
           <span class="s">{{ '%.0f'|format(c.score) }}</span></div>
         <div class="why">{{ c.summary }}</div>
         <ul>{% for f in c.factors|sort(attribute='contribution', reverse=true) %}
@@ -508,6 +509,13 @@ def market_stats(m) -> List[dict]:
     return rows
 
 
+def cap_label(v) -> str:
+    """Market cap in the unit a reader thinks in."""
+    if not v:
+        return ""
+    return f"${v/1e12:.1f}T" if v >= 1e12 else f"${v/1e9:.0f}B"
+
+
 def render(events: List[dict], run: dict) -> str:
     for e in events:
         a = e["assessment"]
@@ -540,6 +548,7 @@ def render(events: List[dict], run: dict) -> str:
             e["chart_days"] = 0
 
         for c in e.get("candidates") or []:
+            c.cap_label = cap_label(getattr(c, "market_cap", None))
             c.summary = narrative.candidate_summary(
                 c, a.metrics.median_return, a.metrics.window)
 

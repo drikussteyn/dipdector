@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Protocol
 import datetime as dt
 
+import pandas as pd
+
 
 @dataclass(frozen=True)
 class Company:
@@ -33,6 +35,7 @@ class Company:
     industry: str
     sub_industry: str
     index_membership: tuple = ()
+    market_cap: Optional[float] = None
 
     @property
     def classification_path(self) -> str:
@@ -231,6 +234,9 @@ class SP500ClassificationProvider(SeedClassificationProvider):
                 industry_group="", industry="",
                 sub_industry=r.sub_industry,
                 index_membership=("S&P 500",),
+                market_cap=(float(r.market_cap)
+                            if getattr(r, "market_cap", None) and
+                            pd.notna(r.market_cap) else None),
             )
             for r in df.itertuples(index=False)
         ])

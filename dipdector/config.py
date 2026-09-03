@@ -32,7 +32,7 @@ def load_env() -> None:
     load_dotenv()
 
 
-PARAMS_VERSION = "0.6.0-fitted"
+PARAMS_VERSION = "0.7.0-fitted"
 
 CHANGELOG_THRESHOLDS = [
     ("0.1.0-unvalidated", "Initial values taken verbatim from devlog s.6 and s.50. "
@@ -43,6 +43,21 @@ CHANGELOG_THRESHOLDS = [
                           "raised 4 -> 5. Added beta-adjusted excess return. "
                           "Effect on event frequency measured, not assumed — see "
                           "README."),
+    ("0.7.0-fitted", "material_decline -0.05 -> -0.10, closing a real gap: "
+                     "the old pairing of a -12% median with members counted "
+                     "as falling at only -5% could fire on a group where four "
+                     "names collapsed and five barely moved. That is a "
+                     "handful of disasters dragging a median, not an industry "
+                     "falling together, and this tool exists to find the "
+                     "second. -10% was already the sweep's most stable "
+                     "finding (+1.00, identical ordering in both eras) and "
+                     "had been applied only halfway. Engine-validated "
+                     "2016-2026, at an UNCHANGED 2.3 events/year - it does "
+                     "not filter fewer events, it swaps which ones qualify: "
+                     "12-month median +48.9% -> +59.6%, hit 87% -> 92%, worst "
+                     "decile -4.2% -> +11.7%, worst single event -27.4% -> "
+                     "-7.7%, further fall -9.6% -> -5.5%, 24 of 24 "
+                     "recovered."),
     ("0.6.0-fitted", "Re-derived on the primary-source universe, because "
                      "0.5.0 was fitted on a Wikipedia GICS grouping and then "
                      "left running on a different one - the parameters and "
@@ -143,7 +158,7 @@ class DetectionConfig:
     # s.6.1 — a company counts as "materially declining" at this return or worse
     # over the primary window. The devlog does not pin this number; it is
     # inferred so that "materially" is not left undefined in code.
-    material_decline: float = -0.05
+    material_decline: float = -0.10
 
     # s.6.2 — industry median return over primary window.
     industry_median_threshold: float = -0.12
@@ -270,6 +285,7 @@ class RecoveryConfig:
         "historical_resilience",  # behaviour in prior comparable drawdowns
         "liquidity",            # dollar volume
         "relative_stability",   # trailing volatility vs industry
+        "company_scale",        # market cap vs industry median
     )
     pending_inputs: tuple = (
         "balance_sheet_strength", "cash", "debt", "free_cash_flow",
