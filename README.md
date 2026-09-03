@@ -12,8 +12,8 @@ just fall together, and is that unusual?* — and hands you the evidence.
 ## What you get
 
 **A daily scan.** Every weekday after the US close, GitHub runs the detector
-over 35 large-cap companies in 6 sub-industries. Most days nothing fires and
-you hear nothing.
+over the whole S&P 500 — 503 companies, grouped into their GICS sub-industries.
+Most days nothing fires and you hear nothing.
 
 **An email when something does.** Short and plain: what fell, how far, how
 unusual, and a link.
@@ -27,10 +27,10 @@ email from two years ago still opens the report as it was written that day.
 **An archive.** [`docs/index.html`](docs/index.html) lists every event ever
 detected, newest first.
 
-The archive ships already populated with **35 real events from 2016–2026**,
+The archive ships already populated with **39 real events from 2016–2026**,
 backfilled from live market data — including the March 2023 regional banking
-collapse (score 100/100), the February 2020 crash across airlines, hotels,
-banks and oil services, and the August 2024 unwind.
+collapse (score 100/100), the February–March 2020 crash across eleven separate
+industries, and the August 2024 unwind.
 
 ---
 
@@ -142,36 +142,37 @@ preview one.
 
 ## What the numbers actually say
 
-Measured over 10.7 years of real prices, not fixtures:
+Measured over 10.7 years of real prices across the full index, not fixtures:
 
-**It fires 3.3 times a year.** Under ~1 would be too tight to learn from; over
-~15 would make it a screener. The starting thresholds landed inside the useful
-band without tuning, so they have not been changed.
+**It fires 3.7 times a year.** Under ~1 would be too tight to learn from; over
+~15 would make it a screener. Widening from 6 hand-picked industries to all 127
+sub-industries barely moved this, because the 80%-breadth gate does the real
+filtering — a 12-member group needs 10 of 12 falling, which is harder than 4 of
+5, not easier. The starting thresholds have never needed changing.
 
 **The bounce is real.** Entering three days after each alert: 3-month median
-+8.6% (68% of the time positive), 12-month median +15.5% (76%). 91% of events
-recovered to their pre-shock level within two years, median 44 trading days.
++9.9% (79% of the time positive), 12-month median +32.3% (84%). 97% of events
+recovered to their pre-shock level within two years, median 46 trading days.
 
-**Three things you should not skip:**
+**The score predicts the bounce.** Bucketed by score, 6-month hit rates rise
+77% → 83% → 92%. This was *not* true of the six-industry universe, where the
+buckets came out flat and out of order; that sample was dominated by a handful
+of correlated oil and airline events, and the wider cross-section fixed it.
 
-- **The median event keeps falling 19% after the alert**, worst case 65%.
-  Detection is not timing. This is the number that decides whether a position
-  is holdable, and it is large.
-- **The shock score does not predict the size of the bounce.** Bucketed by
-  score, 6-month returns come out flat and out of order (+11.3% / +14.9% /
-  +12.5%). A 100/100 is not a better opportunity than a 60/100 — it is a
-  bigger fall.
-- **Survivorship bias is live.** The universe uses today's index membership
-  for every historical date, so every figure above is optimistic. Fixing this
-  needs point-in-time membership data.
+**Two things you should not skip:**
 
-As a portfolio strategy the simulator does not beat buying and holding the
-S&P 500 once risk is counted (Sharpe 0.52 vs 0.68, drawdown −64% vs −34%), and
-naive single-stock dip buying beat both. It does beat 90% of random-timing
-runs, so the detector is contributing something — but the event study is the
-half worth reading, and this is a research tool, not a strategy.
+- **The median event keeps falling another 10% after the alert**, worst case
+  45%. Detection is not timing. Better than the 19% the narrow universe showed,
+  but still the number that decides whether a position is holdable.
+- **Survivorship bias is live.** The universe uses today's index membership for
+  every historical date, so every figure above is optimistic. Fixing it needs
+  point-in-time membership data.
 
----
+As a portfolio strategy the simulator returns +18.2% CAGR against the S&P 500's
++13.4%, but at a deeper drawdown (−48% vs −34%) and near-identical risk-adjusted
+return (Sharpe 0.67 vs 0.68). Naive single-stock dip buying still beat both. It
+beats 83% of random-timing runs, so the detector is contributing — but the event
+study is the half worth reading, and this is a research tool, not a strategy.
 
 ## Design rules held in code, not comments
 
@@ -206,7 +207,9 @@ dipdector/
   charts.py              inline SVG, no JS
   narrative.py           deterministic plain-English summaries
   replay.py              single-date runner
-  data/                  universe, price providers, ETF benchmarks
+  data/sp500.py          S&P 500 constituents + GICS, cached to CSV
+  data/universe.py       classification adapter over that list
+  data/                  price providers, ETF benchmarks
   engine/                deterministic metrics, shock score, triggers
   news/                  article retrieval + Claude cause classification
   analysis/recovery.py   recovery candidate ranking

@@ -90,10 +90,19 @@ working — it is unofficial and will eventually break.
 Ask the owner before starting any of these:
 - point-in-time index membership (removes survivorship bias — highest value)
 - fundamentals feed (unlocks 14 of 18 recovery inputs)
-- expanding `data/universe.py` beyond 6 sub-industries. Note that
-  **Semiconductor Materials & Equipment currently has 4 members and
-  `min_industry_members` is 5**, so it is silently never scored. Either add a
-  fifth name or drop it.
+- the 206 companies whose sub-industry has fewer than 5 S&P 500 members are
+  never scored, because a group that small cannot demonstrate breadth. The
+  fix is the GICS *industry* tier, between sub-industry and sector, which
+  Wikipedia does not publish. Grouping them by sector instead would mix
+  refiners with coal miners and manufacture false breadth — worse than the
+  gap.
+
+**Done since the original brief:** the universe is no longer six hand-picked
+industries. `data/sp500.py` loads all 503 constituents with their GICS
+classification, and 36 sub-industries clear the 5-member floor. This also
+resolved a dead spot — Semiconductor Materials & Equipment had 4 members
+against a minimum of 5 and could never fire; on the full index it has enough
+members, and it scored highest of all 36 groups on the first live scan.
 
 ## Rules that must not be broken
 
