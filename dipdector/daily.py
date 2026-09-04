@@ -24,6 +24,7 @@ import datetime as dt
 import os
 import sys
 import traceback
+from typing import Optional
 
 import pandas as pd
 
@@ -61,6 +62,26 @@ def _fetch(provider_kind: str, fixture: str, tickers, as_of, history_days):
                 import time
                 time.sleep(5 * (attempt + 1))
     return None, last_error
+
+
+SEARCH_HINDSIGHT_DAYS = 7
+
+
+def is_live_alert(as_of: dt.date, today: Optional[dt.date] = None) -> bool:
+    """
+    May the cause analysis search the web for this alert?
+
+    Only when the alert is happening now. Searching the web about an old
+    decline returns pieces written after it — including ones that say how it
+    resolved — and a replay that reads those is measuring hindsight, not
+    detection, which would quietly invalidate every backtest number.
+
+    A named function rather than an inline comparison because it is the guard
+    that keeps the backtester honest, and an inline one-liner is testable only
+    by running the whole daily job on a day something happens to fire. This
+    one is pinned by tests instead.
+    """
+    return ((today or dt.date.today()) - as_of).days <= SEARCH_HINDSIGHT_DAYS
 
 
 def _resolve_sender(kind: str):
@@ -230,11 +251,7 @@ def run(args) -> int:
             keywords_for(a.industry,
                          [c.ticker for c in a.metrics.companies]),
             cutoff, 10)
-        # Let the model research the cause itself, but only when this is a
-        # live alert. Searching the web about an old decline returns pieces
-        # written after it — including ones that say how it resolved — and a
-        # replay that reads those is measuring hindsight, not detection.
-        live = (dt.date.today() - as_of).days <= 7
+        live = is_live_alert(as_of)
         event = classify_event(a.industry, a, arts, allow_search=live)
         if live:
             print(f"    {a.industry}: cause analysis with web search")

@@ -23,7 +23,8 @@ import os
 
 import pytest
 
-from dipdector.daily import build_parser, run
+from dipdector.daily import (SEARCH_HINDSIGHT_DAYS, build_parser,
+                             is_live_alert, run)
 from dipdector.publish import load_index
 
 FIXTURE = "dipdector/fixtures/synthetic_semis.csv"
@@ -122,3 +123,32 @@ def test_delivered_alert_reports_and_records(offline, tmp_path):
     assert set(industries) == {"Semiconductors",
                                "Semiconductor Equipment & Materials"}
     assert all(v["last_level"] == "MAJOR_EVENT" for v in industries.values())
+
+
+# --- the hindsight guard -----------------------------------------------
+#
+# This decides whether the cause analysis may search the web, and it is the
+# line that keeps the backtester honest: a replay that reads articles written
+# after the crash is measuring hindsight, not detection. It used to be an
+# inline comparison inside a loop that only executes on a day something fires,
+# so it could only be checked by getting lucky with the market.
+
+def test_todays_alert_may_search():
+    today = dt.date(2026, 9, 4)
+    assert is_live_alert(today, today) is True
+
+
+def test_alert_from_within_the_window_may_search():
+    assert is_live_alert(dt.date(2026, 8, 29), dt.date(2026, 9, 4)) is True
+
+
+def test_replay_of_an_old_event_may_not_search():
+    """The 2026-07-07 event is 59 days old — the case that must stay closed."""
+    assert is_live_alert(dt.date(2026, 7, 7), dt.date(2026, 9, 4)) is False
+
+
+def test_the_window_edge_is_where_it_is_documented_to_be():
+    at_edge = dt.date(2026, 9, 4) - dt.timedelta(days=SEARCH_HINDSIGHT_DAYS)
+    assert is_live_alert(at_edge, dt.date(2026, 9, 4)) is True
+    assert is_live_alert(at_edge - dt.timedelta(days=1),
+                         dt.date(2026, 9, 4)) is False
