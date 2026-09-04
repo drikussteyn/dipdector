@@ -26,6 +26,14 @@ on:
         description: "Send an 'all quiet' note now, to prove mail delivery works"
         type: boolean
         default: false
+      test_analysis:
+        # The other half that a green run does not prove. Cause analysis only
+        # executes on a day something fires — twice a year — so an expired
+        # key, a blocked egress route or a model that stopped accepting the
+        # request would all surface on the one day the tool exists for.
+        description: "Run the cause-analysis self-test (costs a few cents)"
+        type: boolean
+        default: false
 
 concurrency:
   group: dipdector-daily
@@ -50,6 +58,16 @@ jobs:
           cache: pip
 
       - run: pip install -r requirements.txt
+
+      # Before the scan, so a broken analysis path is reported even if the
+      # scan then fails for its own reasons.
+      - name: Cause-analysis self-test
+        if: ${{ inputs.test_analysis }}
+        env:
+          ANTHROPIC_API_KEY:      ${{ secrets.ANTHROPIC_API_KEY }}
+          DIPDECTOR_MODEL:        ${{ vars.DIPDECTOR_MODEL }}
+          DIPDECTOR_SEARCH_MODEL: ${{ vars.DIPDECTOR_SEARCH_MODEL }}
+        run: python -m dipdector.selftest
 
       - name: Run scan
         env:
