@@ -65,9 +65,8 @@ itself, so there is nothing to configure.
 ### 3. Create a Resend account
 
 Resend is a transactional email service — the kind that sends order
-confirmations and one-time codes. It means alerts arrive from the tool's own
-identity rather than your personal address, and setup is a single API key: no
-app password, no SMTP ports, no two-factor dance.
+confirmations and one-time codes. Setup is a single API key: no app password,
+no SMTP ports, no two-factor dance.
 
 Sign up at [resend.com](https://resend.com) **using the same address you want
 alerts sent to**, then create an API key.
@@ -80,10 +79,26 @@ in plain English if they don't.
 
 The free tier is 3,000 emails a month. This sends a handful a year.
 
-If you would rather use Gmail, `EMAIL_PROVIDER=smtp` with the `SMTP_*` secrets
-still works — see `.env.example`.
+### 4. Whitelist the sender — do not skip this
 
-### 4. Add the secrets
+`onboarding@resend.dev` is shared by every unverified account on the platform,
+so it carries their reputation as well as yours. **Gmail filed every alert
+from it as spam.**
+
+For a detector that fires about twice a year, that is the worst failure it
+has: nobody goes looking in spam for a warning they did not know was coming.
+The archive still gets the report either way, but the email is the part that
+tells you to go and read it.
+
+In Gmail: **Settings → Filters and Blocked Addresses → Create a new filter**,
+From `onboarding@resend.dev`, then **Never send it to Spam** (and star it,
+while you are there). Send yourself a test with step 6 and confirm it lands in
+the inbox.
+
+The permanent fix is a domain of your own: verify it in Resend, set
+`RESEND_FROM` to an address on it, and the shared reputation stops applying.
+
+### 5. Add the secrets
 
 Repository **Settings → Secrets and variables → Actions → New repository
 secret**. Add these:
@@ -92,18 +107,30 @@ secret**. Add these:
 |---|---|
 | `ALERT_EMAIL` | where alerts go — the same address as your Resend account |
 | `RESEND_API_KEY` | the key from step 3 |
+| `RESEND_FROM` | optional; only once you have verified a domain |
 | `ANTHROPIC_API_KEY` | your Claude Console API key (optional) |
 
 Without `ANTHROPIC_API_KEY` everything still works; reports say "cause not
 determined" instead of explaining why. It is only called on days something
 fires — a few cents a month, not a few cents a day.
 
-### 5. Run it once by hand
+Prefer to send from your own Gmail instead? Set `EMAIL_PROVIDER: smtp` in
+`.github/workflows/daily.yml` and add `SMTP_USERNAME`, `SMTP_PASSWORD` (an
+[App Password](https://myaccount.google.com/apppasswords), not your login
+password) and `SMTP_SENDER`. The workflow is already wired for both.
+
+These names have to match what the workflow reads. Getting them wrong is a
+failed run rather than a silent one: the job scans, publishes and commits, and
+*then* fails, so the archive stays honest while the red X tells you the mail
+is down.
+
+### 6. Run it once by hand
 
 **Actions** tab → **DipDector daily scan** → **Run workflow**.
 
 Watch it finish. On a quiet day it prints the scores and exits; the archive's
-"last scan" date updates. If something fired, you get the email.
+"last scan" date updates. If something fired, you get the email — check that
+it reached the inbox rather than spam, which is what step 4 is for.
 
 That is the whole setup. It now runs at 21:45 UTC on weekdays.
 
@@ -126,7 +153,7 @@ below.
     --to you@example.com --publish-dir /tmp/preview
 
 # the tests
-.venv/bin/python -m pytest dipdector/tests -q          # 44 passing
+.venv/bin/python -m pytest dipdector/tests -q          # 75 passing
 
 # rebuild the archive from history
 .venv/bin/python -m dipdector.backfill --start 2016-01-01 --step 5

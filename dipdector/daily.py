@@ -63,6 +63,49 @@ def _fetch(provider_kind: str, fixture: str, tickers, as_of, history_days):
     return None, last_error
 
 
+def _resolve_sender(kind: str):
+    """
+    Returns (sender, None) or (None, why).
+
+    `get_sender` raises on a misconfiguration, which is right for a caller
+    about to send something. This caller is not one: it runs before the scan
+    knows whether there is anything to send, and a mail problem must never be
+    allowed to destroy a scan result that is already correct.
+    """
+    try:
+        return get_sender(kind), None
+    except Exception as exc:            # noqa: BLE001 — reported, not raised
+        return None, str(exc)
+
+
+def _undeliverable(why: str, *, alerting: bool) -> int:
+    """
+    End the run red, after the scan's own work is safely on disk.
+
+    Silence is this tool's normal output, so silence cannot also be how a
+    broken mail channel looks — nobody goes looking for an alert they were
+    never told to expect. When the channel is down the only remaining way to
+    say so is to fail the run, which is what makes the scheduler complain.
+    """
+    print(f"\nDELIVERY FAILED: {why}")
+    if alerting:
+        print("An alert fired today and could NOT be delivered. Its report "
+              "page and stored event were written before this failure, so "
+              "the evidence is in the archive; only the email is missing. "
+              "The alert is deliberately not marked as sent, so the next run "
+              "will try again.")
+    else:
+        print("Nothing fired today, so nothing was missed — but had it, this "
+              "run could not have told you. That is why a quiet day still "
+              "fails here rather than passing quietly.")
+    print("The scan itself succeeded, and everything it produced reached "
+          "disk before this failure.")
+    print("Fix the mail credentials. Under GitHub Actions they come from the "
+          "repository secrets listed in .github/workflows/daily.yml "
+          "(Settings -> Secrets and variables -> Actions).")
+    return 1
+
+
 def run(args) -> int:
     today = (dt.date.fromisoformat(args.as_of) if args.as_of
              else dt.date.today())
@@ -125,9 +168,20 @@ def run(args) -> int:
         if send:
             to_send.append({"assessment": a, "reason": reason})
 
-    sender = get_sender(args.sender)
+    # Resolved here, early, so a broken mail channel is reported on the first
+    # quiet run rather than discovered on the one day in six months an alert
+    # fires. Resolving is not the same as aborting, though, and this used to
+    # abort: a missing SMTP password threw on this line and took the entire
+    # scan down with it — on a day two industries scored MAJOR_EVENT, no
+    # report page, no stored event and no state write survived, because the
+    # mailer could not be built. The scan's output is the product. Delivery
+    # is one channel for it, and a channel failing must not erase the goods.
+    sender, sender_error = _resolve_sender(args.sender)
     state.last_run = today.isoformat()
-    state.last_run_status = "ok"
+    state.last_run_status = ("ok" if sender is not None
+                             else "scan ok, delivery unconfigured")
+    if sender_error:
+        print(f"\n  mail channel unavailable: {sender_error}")
 
     if not to_send:
         state.runs_since_last_alert += 1
@@ -140,11 +194,18 @@ def run(args) -> int:
             note_quiet_run(args.publish_dir, as_of.isoformat(),
                            CONFIG.params_version, len(companies))
         if args.heartbeat_every and quiet % args.heartbeat_every == 0:
-            msg = compose_heartbeat(as_of, quiet, state.summary(), len(companies))
-            sender.send(args.to, msg)
-            print(f"Heartbeat sent via {sender.name}.")
+            if sender is None:
+                print("Heartbeat due, but there is no mail channel to send it "
+                      "on — which is the thing a heartbeat exists to prove.")
+            else:
+                msg = compose_heartbeat(as_of, quiet, state.summary(),
+                                        len(companies))
+                sender.send(args.to, msg)
+                print(f"Heartbeat sent via {sender.name}.")
         state.prune(as_of)
         state.save(args.state)
+        if sender is None:
+            return _undeliverable(sender_error, alerting=False)
         return 0
 
     # --- enrich only what is actually being sent ------------------------
@@ -216,6 +277,13 @@ def run(args) -> int:
 
     message = compose(events_for_report, as_of, frame.synthetic, report_html,
                       links)
+    if sender is None:
+        # Everything above is already durable — the event is in the store and
+        # the report page is on disk with its permanent URL. Bail out without
+        # recording the alert as sent, so tomorrow's run retries it.
+        state.prune(as_of)
+        state.save(args.state)
+        return _undeliverable(sender_error, alerting=True)
     sender.send(args.to, message)
     print(f"\nSent {len(to_send)} alert(s) to {args.to} via {sender.name}.")
 
@@ -231,8 +299,11 @@ def run(args) -> int:
     return 10
 
 
-def main():
-    load_env()
+def build_parser() -> argparse.ArgumentParser:
+    """
+    Separate from main() so tests drive run() through the real defaults
+    instead of a hand-built namespace that silently drifts from them.
+    """
     p = argparse.ArgumentParser(description="DipDector daily check")
     p.add_argument("--to", default=os.environ.get("ALERT_EMAIL"),
                    help="recipient; or set ALERT_EMAIL")
@@ -263,7 +334,12 @@ def main():
     p.add_argument("--as-of", default=None, help="override today, for testing")
     p.add_argument("--dry-run", action="store_true",
                    help="send nothing permanent and do not update state")
-    args = p.parse_args()
+    return p
+
+
+def main():
+    load_env()
+    args = build_parser().parse_args()
 
     if not args.to:
         sys.exit("No recipient. Pass --to or set ALERT_EMAIL.")

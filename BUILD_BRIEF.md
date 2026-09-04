@@ -11,7 +11,7 @@ place orders, and it must never tell anyone to buy anything.
 
 ## State of the code
 
-Working, tested, 44 passing tests, and running against real market data.
+Working, tested, 75 passing tests, deployed, and running against real market data.
 
 - detection engine, industry shock score, 5 trigger conditions
 - per-industry ETF benchmarks, beta-adjusted excess return
@@ -27,7 +27,7 @@ Working, tested, 44 passing tests, and running against real market data.
 **Verify this before you start, and again before you finish:**
 
 ```bash
-python -m pytest dipdector/tests -q                    # expect 44 passed
+python -m pytest dipdector/tests -q                    # expect 75 passed
 python -m dipdector.daily --provider fixture \
   --fixture dipdector/fixtures/synthetic_semis.csv \
   --as-of 2026-06-30 --to test@example.com --dry-run \
@@ -69,15 +69,60 @@ Plus two silent traps: `EMAIL_PROVIDER` was documented but read by nothing
 (so "start on console" was unsafe), and the workflow treated exit code 10
 ("alerts sent") as a job failure.
 
+## What deployment showed
+
+It is live, and the first *scheduled* run failed. Two manual runs had passed
+an hour earlier, which is the part worth understanding: the workflow was
+switched from Resend to SMTP between them, and the README was not. So the
+setup guide told you to add `RESEND_API_KEY` while the workflow read
+`SMTP_USERNAME` / `SMTP_PASSWORD`, and no one adds a secret no document asks
+for. Docs drifting from a workflow is not a documentation problem here; it is
+an outage.
+
+There was a second copy of the same mistake in the workflow itself: it set
+`EMAIL_PROVIDER: smtp` *and* passed `--sender smtp`, and the flag silently
+wins over the variable. Two settings that must agree is one too many, so the
+flag is gone and `EMAIL_PROVIDER` is now the only switch.
+
+Delivery has since been put back on Resend, deliberately and with its cost
+accepted: the free tier sends from `onboarding@resend.dev`, shared by every
+unverified account on the platform, and Gmail files it as spam. **The sender
+has to be whitelisted** — README step 4 — or the alert arrives somewhere
+nobody looks, which for a detector that fires twice a year is barely
+distinguishable from not sending it. Verifying a domain and setting
+`RESEND_FROM` is the real fix; SMTP stays wired up as the alternative.
+
+What the outage exposed is the bug worth remembering. `get_sender()` was
+called before the code knew whether there was anything to send, so a missing
+SMTP password raised on a day **two industries scored MAJOR_EVENT** and took
+the whole run with it — no report page, no stored event, no state write. The
+detection worked perfectly and left no trace that it had. Worse, the failed
+step skipped the commit step after it, so the archive's last-scan date froze
+at the last good run and the site became indistinguishable from a dead job —
+the exact ambiguity `note_quiet_run` exists to prevent.
+
+Fixed by separating the product from the channel: the scan publishes its
+pages, stores its event and writes its state, and only then is delivery
+allowed to fail. It still fails — silence is this tool's normal output, so
+silence cannot also be how a broken mailer looks, and the red run is the only
+remaining way to say so — but it fails with the evidence on disk and the
+alert deliberately not marked as sent, so the next run retries it.
+`tests/test_daily.py` is the alarm; it had no coverage before, which is why
+this shipped.
+
 ## Your tasks, in order
 
 Tasks 1–4 of the original brief are done: the first real run, the firing-rate
 measurement, delivery, and scheduling. What remains:
 
-### 1. Deploy it
+### 1. Confirm delivery actually arrives
 
-See `README.md`. Push to GitHub, enable Pages on `main /docs`, add the
-secrets, run the workflow by hand once. Nothing here needs code changes.
+Pages is live, the schedule runs, and `RESEND_API_KEY` is set, so the next run
+should end green. What is NOT confirmed is that the mail reaches an inbox
+rather than a spam folder — the whole point of the sender warning above. Run
+the workflow by hand, then go and look. If it landed in spam, whitelist
+`onboarding@resend.dev` before doing anything else; a detector nobody reads is
+not a working detector. No code changes needed for any of this.
 
 ### 2. Watch the first month
 
