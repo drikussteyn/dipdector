@@ -118,3 +118,85 @@ def test_duplicate_headlines_are_collapsed():
     ])
 
     assert len(provider.fetch(["KRE"], dt.datetime(2023, 3, 14, 23, 59), 10)) == 1
+
+
+# --- the two-stage request shapes --------------------------------------
+#
+# Retrieval and judgement run on different models now, and each stage has one
+# requirement the API enforces by rejecting the call outright. Both were found
+# the expensive way — a live 400 that degraded a real event to "cause not
+# determined" — and neither is visible by reading the request back.
+
+class _M:
+    """Minimal stand-in for IndustryMetrics, enough to render the prompt."""
+    industry = "Semiconductors"
+    window = 5
+    as_of = dt.date(2026, 7, 7)
+    median_return = -0.2
+    market_return = 0.01
+    relative_to_market = -0.21
+    n_declining = 5
+    n_members = 5
+    abnormality_z = 3.8
+    mean_pairwise_correlation = 0.9
+    median_volume_z = 0.8
+
+    class _C:
+        ticker = "AMAT"
+        returns = {5: -0.2}
+    companies = [_C(), _C()]
+
+
+class _A:
+    metrics = _M()
+    score = 88.0
+
+    class level:
+        value = "MAJOR_EVENT"
+
+
+def test_search_pass_allows_only_direct_calls():
+    """
+    The search tool filters dynamically by calling itself from inside code
+    execution, which Haiku cannot do — the API rejects the whole request
+    rather than degrading. Dropping this line silently disables research.
+    """
+    from ..news.engine import _research_payload
+
+    tool = _research_payload("Semiconductors", _A(), [])["tools"][0]
+    assert tool["allowed_callers"] == ["direct"]
+
+
+def test_judge_pass_asks_for_a_schema_and_carries_no_search_tool():
+    """
+    Structured output and search citations cannot coexist in one call. The
+    split is what makes both available at all, so a search tool appearing
+    here would trade guaranteed-parseable JSON for nothing.
+    """
+    from ..news.engine import JUDGE_SCHEMA, _judge_payload
+
+    body = _judge_payload("Semiconductors", _A(), [], "some findings")
+    assert body["output_config"]["format"]["schema"] is JUDGE_SCHEMA
+    assert "tools" not in body
+    assert "some findings" in body["messages"][0]["content"]
+
+
+def test_judge_schema_omits_integer_bounds():
+    """
+    minimum/maximum on an integer is rejected by structured outputs. The 0-100
+    range is enforced by _score instead; re-adding them here is a 400.
+    """
+    from ..news.engine import JUDGE_SCHEMA
+
+    for name in ("severity", "structural_risk", "temporary_confidence",
+                 "continuation_risk"):
+        assert JUDGE_SCHEMA["properties"][name] == {"type": "integer"}
+
+
+@pytest.mark.parametrize("raw,expected",
+                         [(50, 50), (0, 0), (100, 100), (140, 100), (-5, 0),
+                          ("73", 73), (None, 0), ("nonsense", 0)])
+def test_scores_are_clamped_to_the_range_the_report_assumes(raw, expected):
+    from ..news.engine import _score
+
+    assert _score(raw) == expected

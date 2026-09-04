@@ -80,9 +80,11 @@ jobs:
           SMTP_PASSWORD:     ${{ secrets.SMTP_PASSWORD }}
           SMTP_SENDER:       ${{ secrets.SMTP_SENDER }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Optional repository variable (Settings -> Variables, not Secrets —
-          # a model id is not a secret). Unset falls back to the code default.
-          DIPDECTOR_MODEL:   ${{ vars.DIPDECTOR_MODEL }}
+          # Optional repository variables (Settings -> Variables, not Secrets —
+          # a model id is not a secret). Unset falls back to the code default:
+          # Opus for the judgement, Haiku for the search pass.
+          DIPDECTOR_MODEL:        ${{ vars.DIPDECTOR_MODEL }}
+          DIPDECTOR_SEARCH_MODEL: ${{ vars.DIPDECTOR_SEARCH_MODEL }}
           # Derived, not a secret: Pages serves a project site at
           # https://<owner>.github.io/<repo>. This is what makes the links in
           # the email absolute and clickable.

@@ -25,12 +25,27 @@ import re
 from dataclasses import dataclass, field, asdict, replace
 from typing import List, Optional, Protocol
 
-# Claude Sonnet 5 is both newer and cheaper than the Sonnet 4.6 this was
-# written against ($2/$10 vs $3/$15 per 1M tokens). Override with
-# DIPDECTOR_MODEL to move to claude-opus-5 without touching code.
+# TWO MODELS, because retrieval and judgement are different jobs.
+#
+# One call used to do both, and it was measured doing it: six searches, 166k
+# input tokens, 10k output, 138 seconds. Nearly all of that input is search
+# results being re-read on every iteration — bulk text that needs skimming,
+# not a frontier model's attention. Meanwhile the part that actually matters,
+# deciding what the evidence supports, was getting whatever budget survived
+# the reading.
+#
+# So SEARCH_MODEL does the looking and writes down what it found; MODEL reads
+# that digest and makes the call. The point is NOT saving money — this fires
+# about twice a year and cost either way is pennies. The point is that
+# judging a 3k digest with Opus costs about two cents, while judging the raw
+# 166k of search results with it would cost the better part of a dollar and
+# be slower. Shrinking what reaches the judge is what makes the good judge
+# affordable.
+#
 # `or` rather than a get() default: an unset GitHub Actions variable is
 # passed through as an empty string, not as an absent key.
-MODEL = os.environ.get("DIPDECTOR_MODEL") or "claude-sonnet-5"
+MODEL = os.environ.get("DIPDECTOR_MODEL") or "claude-opus-5"
+SEARCH_MODEL = os.environ.get("DIPDECTOR_SEARCH_MODEL") or "claude-haiku-4-5"
 
 SEARCH_INSTRUCTION = """
 Search is available to you, and you should use it. The supplied articles come
@@ -64,6 +79,54 @@ CAUSE_TAXONOMY = [
     "natural disaster", "consumer-demand shock", "technology disruption",
     "industry-specific operational disruption", "other",
 ]
+
+RESEARCH_PROMPT = """
+You are the research half of a market-anomaly tool. An industry has fallen
+hard and someone needs to know why. Your job is to find out what was being
+reported at the time and write it down. It is NOT to score the event, rate its
+severity, or decide whether the fall is temporary — a second pass does that,
+and it needs evidence from you rather than conclusions.
+
+Write plain prose, at most 600 words:
+
+  - what you found, most load-bearing first, each claim attributed to who
+    reported it ("Reuters reported...", "the company's own filing said...")
+  - dates, so the reader can see whether a story actually precedes the fall
+  - where accounts disagree, both accounts
+  - what you looked for and could NOT find
+
+Never state as fact anything no source said. If the searches turn up nothing
+that explains the decline, say exactly that — an industry can fall for reasons
+that are not yet public, and "no confirmed catalyst" is a real and useful
+finding. Do not reach for a plausible-sounding story to fill the gap.
+"""
+
+# Constrains stage two's reply. A model that reasons well but wraps its answer
+# in prose, or emits almost-JSON, used to degrade a genuine alert to "cause
+# not determined"; a schema makes that unrepresentable rather than unlikely.
+JUDGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string"},
+        "causes": {"type": "array",
+                   "items": {"type": "string", "enum": CAUSE_TAXONOMY}},
+        "causal_chain": {"type": "string"},
+        "temporary_confidence": {"type": "integer"},
+        "structural_risk": {"type": "integer"},
+        "severity": {"type": "integer"},
+        "continuation_risk": {"type": "integer"},
+        "reasoning": {"type": "string"},
+        "evidence_article_ids": {"type": "array", "items": {"type": "integer"}},
+        "unresolved_questions": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["title", "causes", "causal_chain", "temporary_confidence",
+                 "structural_risk", "severity", "continuation_risk",
+                 "reasoning", "evidence_article_ids", "unresolved_questions"],
+    "additionalProperties": False,
+}
+# The schema subset structured outputs accepts has no minimum/maximum for
+# integers, so the 0-100 range is asked for in the prompt and enforced here.
+# A score outside the range would be rendered as-is on the report otherwise.
 
 SOURCE_TIERS = {
     1: "primary government or company announcement",
@@ -297,19 +360,92 @@ def _strip_citation_tags(text: str) -> str:
     return re.sub(r"</?cite[^>]*>", "", text)
 
 
-def _payload(industry, assessment, articles, allow_search: bool) -> dict:
-    """The request body. Search is a server tool, so no client-side loop."""
-    system = SYSTEM_PROMPT + (SEARCH_INSTRUCTION if allow_search else "")
-    body = {
-        "model": MODEL, "max_tokens": 8000, "system": system,
+def _research_payload(industry, assessment, articles) -> dict:
+    """
+    Stage one: go and find out what happened. Search is a server tool, so
+    there is no client-side loop.
+
+    This model is explicitly NOT asked to judge. It reports what it found and
+    who said it; scoring the event is stage two's job, on a stronger model.
+    Keeping the roles apart is also what stops a cheap model's paraphrase
+    from quietly becoming the finding.
+    """
+    return {
+        "model": SEARCH_MODEL, "max_tokens": 8000,
+        "system": RESEARCH_PROMPT + SEARCH_INSTRUCTION,
         "messages": [{"role": "user",
                       "content": _build_user_prompt(industry, assessment,
                                                     articles)}],
+        # allowed_callers=["direct"] is required, not decoration. This search
+        # tool does its dynamic filtering by calling itself from inside code
+        # execution, and Haiku does not support programmatic tool calling —
+        # without this the request is rejected outright. Direct calling is
+        # all the research pass needs: it wants the results, not a filtering
+        # pipeline it would then have to reason about.
+        "tools": [{"type": "web_search_20260209", "name": "web_search",
+                   "max_uses": 6, "allowed_callers": ["direct"]}],
     }
-    if allow_search:
-        body["tools"] = [{"type": "web_search_20260209", "name": "web_search",
-                          "max_uses": 6}]
-    return body
+
+
+def _judge_payload(industry, assessment, articles, digest: str) -> dict:
+    """
+    Stage two: decide what the evidence supports, and return it as JSON that
+    is guaranteed to parse.
+
+    `output_config.format` constrains the response to JUDGE_SCHEMA, which
+    removes a whole failure mode — a reply that was perfectly sensible prose
+    but not JSON used to degrade a real alert to "cause not determined".
+    It also has no search tool: structured output and search citations do not
+    coexist, and by this point the searching is already done.
+    """
+    prompt = _build_user_prompt(industry, assessment, articles)
+    if digest:
+        prompt += (f"\n\nRESEARCH FINDINGS (retrieved by a search pass; treat "
+                   f"as reported evidence, not as established fact):\n{digest}")
+    return {
+        "model": MODEL, "max_tokens": 8000, "system": SYSTEM_PROMPT,
+        "messages": [{"role": "user", "content": prompt}],
+        "output_config": {"format": {"type": "json_schema",
+                                     "schema": JUDGE_SCHEMA}},
+    }
+
+
+def _post(key: str, body: dict, timeout: int) -> dict:
+    import requests      # kept local, as it always was, so importing the
+                         # package stays cheap for callers that never classify
+    r = requests.post("https://api.anthropic.com/v1/messages",
+                      headers={"x-api-key": key,
+                               "anthropic-version": "2023-06-01",
+                               "content-type": "application/json"},
+                      json=body, timeout=timeout)
+    if r.status_code >= 300:
+        # raise_for_status() gives "400 Client Error: Bad Request" and nothing
+        # else. That string ends up in the report as the reason there is no
+        # cause analysis, where it tells the reader nothing and tells whoever
+        # has to fix it even less — the API says exactly what was wrong with
+        # the request, so carry it.
+        raise RuntimeError(f"{r.status_code} from {body.get('model')}: "
+                           f"{r.text[:400]}")
+    return r.json()
+
+
+def _text_of(body: dict) -> str:
+    return "".join(b.get("text", "") for b in body.get("content", [])
+                   if b.get("type") == "text")
+
+
+def _research(industry, assessment, articles, key: str):
+    """
+    Returns (digest, sources). Failure is survivable: stage two can still
+    judge the supplied articles, and says that is all it had.
+    """
+    body = _post(key, _research_payload(industry, assessment, articles), 240)
+    digest = _strip_citation_tags(_text_of(body)).strip()
+    if not digest:
+        raise RuntimeError(
+            f"the search pass returned no findings "
+            f"(stop_reason={body.get('stop_reason')})")
+    return digest, _collect_sources(body.get("content", []))
 
 
 def _collect_sources(content: List[dict]) -> List[dict]:
@@ -356,40 +492,38 @@ def classify_event(industry: str, assessment, articles: List[Article],
         return stub("No articles retrieved for this industry and window, and "
                     "web search was not available for this run.", 0)
 
-    import requests
+    # STAGE ONE — go and look. Survivable on its own: if the search pass
+    # fails, stage two still judges the supplied articles and the report says
+    # that is all it had. Losing the research is worse than losing nothing,
+    # but it is not worth losing the alert over.
+    digest, sources, research_note = "", [], ""
+    if allow_search:
+        try:
+            digest, sources = _research(industry, assessment, articles, key)
+        except Exception as exc:             # noqa: BLE001 — degrade, never die
+            research_note = (f" The search pass failed "
+                             f"({type(exc).__name__}: {exc}), so this rests "
+                             f"only on the supplied articles.")
+            if not articles:
+                return stub("Web search was available but the search pass "
+                            f"failed ({type(exc).__name__}: {exc}), and the "
+                            f"news feed returned nothing to fall back on.", 0)
 
-    # Everything from here to the parse is best-effort. The alert does not
-    # depend on it: the numbers are already computed by engine/metrics.py, and
-    # s.44 keeps judgement separable from measurement. A rate limit, an outage
-    # or a reply that isn't the JSON we asked for must degrade to "cause not
-    # determined" — it must not take down a run that has something to report.
+    # STAGE TWO — decide. Best-effort, like everything here: the numbers are
+    # already computed by engine/metrics.py and s.44 keeps judgement separable
+    # from measurement, so a rate limit or an outage must degrade to "cause
+    # not determined" rather than take down a run that has something to say.
     try:
-        r = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={"x-api-key": key, "anthropic-version": "2023-06-01",
-                     "content-type": "application/json"},
-            # Generous ceiling, not a target: max_tokens caps what may be
-            # generated, and unused headroom costs nothing. It was 2000, and
-            # current models think adaptively before answering — on a hard
-            # event (32 articles, a real crisis) the reasoning consumed the
-            # whole budget and the reply came back with 1999 thinking tokens
-            # and an empty answer, which parsed as a failure and degraded a
-            # genuine alert to "cause not determined".
-            json=_payload(industry, assessment, articles, allow_search),
-            timeout=240 if allow_search else 90,
-        )
-        r.raise_for_status()
-        body = r.json()
-        content = body.get("content", [])
-        text = "".join(b.get("text", "") for b in content
-                       if b.get("type") == "text")
+        body = _post(key, _judge_payload(industry, assessment, articles,
+                                         digest), 120)
+        text = _text_of(body)
         if not text.strip():
-            # Distinct from malformed JSON, and worth naming separately: the
-            # model reasoned up to the ceiling without producing an answer.
-            stop = body.get("stop_reason")
+            # Worth naming separately from malformed JSON: the model reasoned
+            # up to the ceiling without ever answering.
             raise RuntimeError(
                 f"the model returned reasoning but no answer "
-                f"(stop_reason={stop}); max_tokens may be too low")
+                f"(stop_reason={body.get('stop_reason')}); max_tokens may be "
+                f"too low")
         payload = json.loads(
             text.replace("```json", "").replace("```", "").strip())
     except Exception as exc:                 # noqa: BLE001 — degrade, never die
@@ -398,11 +532,20 @@ def classify_event(industry: str, assessment, articles: List[Article],
 
     try:
         ev = _assessment_from(payload, len(articles))
-        sources = _collect_sources(content)
+        if research_note:
+            ev = replace(ev, reasoning=ev.reasoning + research_note)
         return replace(ev, searched=bool(sources), sources=sources)
     except Exception as exc:                 # noqa: BLE001
         return stub(f"Cause analysis returned an unreadable payload "
                      f"({type(exc).__name__}: {exc}).", len(articles))
+
+
+def _score(value) -> int:
+    """Clamp a model-supplied 0-100 score, since the schema cannot."""
+    try:
+        return max(0, min(100, int(value)))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _assessment_from(payload: dict, n_articles: int) -> EventAssessment:
@@ -411,10 +554,10 @@ def _assessment_from(payload: dict, n_articles: int) -> EventAssessment:
         title=_strip_citation_tags(payload["title"]),
         causes=payload.get("causes", []),
         causal_chain=_strip_citation_tags(payload.get("causal_chain", "")),
-        temporary_confidence=int(payload.get("temporary_confidence", 0)),
-        structural_risk=int(payload.get("structural_risk", 0)),
-        severity=int(payload.get("severity", 0)),
-        continuation_risk=int(payload.get("continuation_risk", 0)),
+        temporary_confidence=_score(payload.get("temporary_confidence")),
+        structural_risk=_score(payload.get("structural_risk")),
+        severity=_score(payload.get("severity")),
+        continuation_risk=_score(payload.get("continuation_risk")),
         reasoning=_strip_citation_tags(payload.get("reasoning", "")),
         evidence_article_ids=payload.get("evidence_article_ids", []),
         unresolved_questions=payload.get("unresolved_questions", []),
