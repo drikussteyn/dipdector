@@ -11,23 +11,24 @@ place orders, and it must never tell anyone to buy anything.
 
 ## State of the code
 
-Working, tested, 75 passing tests, deployed, and running against real market data.
+Working, tested, 90 passing tests, deployed, and running against real market data.
 
 - detection engine, industry shock score, 5 trigger conditions
 - per-industry ETF benchmarks, beta-adjusted excess return
 - recovery candidate ranking (5 of ~18 intended inputs)
-- news retrieval + Claude cause classification
+- news retrieval + two-stage cause analysis (Haiku searches, Opus judges)
 - HTML report with charts, published as a linked page per event
 - static site builder + archive index (`publish.py`)
 - history backfill (`backfill.py`)
 - backtester: event study + portfolio simulator + controls
 - daily job with alert de-duplication and email delivery
 - GitHub Actions schedule, Pages hosting, state committed back
+- on-demand self-tests for the two paths a quiet run cannot exercise
 
 **Verify this before you start, and again before you finish:**
 
 ```bash
-python -m pytest dipdector/tests -q                    # expect 75 passed
+python -m pytest dipdector/tests -q                    # expect 90 passed
 python -m dipdector.daily --provider fixture \
   --fixture dipdector/fixtures/synthetic_semis.csv \
   --as-of 2026-06-30 --to test@example.com --dry-run \
@@ -110,19 +111,70 @@ alert deliberately not marked as sent, so the next run retries it.
 `tests/test_daily.py` is the alarm; it had no coverage before, which is why
 this shipped.
 
+## Cause analysis is two calls now, not one
+
+Measured, one call doing both jobs: six searches, 166k input tokens, 10k
+output, 138 seconds. Almost all of that input is search results re-read on
+every iteration, and the judgement — the part that matters — got whatever
+budget survived the reading. Intermittently it got none: a live run returned
+reasoning and no answer (`stop_reason=max_tokens`) and degraded a real
+MAJOR_EVENT to "cause not determined".
+
+So `SEARCH_MODEL` (Haiku) searches and writes down what it found, attributed,
+explicitly forbidden from scoring anything; `MODEL` (Opus) reads that digest
+and judges, under a JSON schema so the answer cannot come back unparseable.
+Not a cost exercise — it fires twice a year. Shrinking what reaches the judge
+is what makes the better judge affordable.
+
+Three things here are load-bearing and each was found by a 400 that killed the
+whole request:
+
+1. `allowed_callers: ["direct"]` on the search tool. It filters dynamically by
+   calling itself from inside code execution, which Haiku cannot do.
+2. No `minimum`/`maximum` on integers in `JUDGE_SCHEMA` — structured outputs
+   rejects them. The 0-100 range is clamped in `_score` instead.
+3. Search and structured output cannot share a call, which is the other reason
+   the split exists.
+
+All three are pinned by tests in `test_news.py`, because none is visible
+reading the code back.
+
+## Two self-tests, for the paths a quiet run never touches
+
+`workflow_dispatch` takes `test_email` and `test_analysis`. The first sends a
+heartbeat; the second runs `python -m dipdector.selftest`, which drives the
+real `classify_event` with search on against a fixed synthetic shock and
+discards the verdict — nothing stored, published or emailed, which is why
+searching there is not a hindsight problem.
+
+They exist because a green daily run proves the scan and nothing else. Mail
+and the model calls only execute on an alerting day, so an expired key or a
+changed API shape would otherwise surface twice a year, in the hour it
+matters. Both 400s above were exactly that shape.
+
 ## Your tasks, in order
 
 Tasks 1–4 of the original brief are done: the first real run, the firing-rate
 measurement, delivery, and scheduling. What remains:
 
-### 1. Confirm delivery actually arrives
+### 1. Wait for an event, then check the report reads well
 
-Pages is live, the schedule runs, and `RESEND_API_KEY` is set, so the next run
-should end green. What is NOT confirmed is that the mail reaches an inbox
-rather than a spam folder — the whole point of the sender warning above. Run
-the workflow by hand, then go and look. If it landed in spam, whitelist
-`onboarding@resend.dev` before doing anything else; a detector nobody reads is
-not a working detector. No code changes needed for any of this.
+Everything is deployed and every component has been exercised in CI: the daily
+scan runs green, a heartbeat was delivered through Resend, and the two-stage
+cause analysis answered from inside Actions using the repository's own API key
+(40 sources). Both are re-checkable on demand — `workflow_dispatch` takes
+`test_email` and `test_analysis` inputs.
+
+What has NOT happened is a real alert, because no industry has fired since
+deployment. Nothing to do but wait; at ~2.3 events/year the first one may be
+months away. When it lands, the thing to judge is whether the cause analysis
+actually explains the fall and whether the sources support it — that is the
+part no self-test can score.
+
+The one open item needing a human: confirm the alert lands in the inbox rather
+than spam. `RESEND_FROM` is unset, so mail goes out as the shared
+`onboarding@resend.dev`, which Gmail has filed as spam before. A detector
+nobody reads is not a working detector.
 
 ### 2. Watch the first month
 

@@ -153,7 +153,7 @@ below.
     --to you@example.com --publish-dir /tmp/preview
 
 # the tests
-.venv/bin/python -m pytest dipdector/tests -q          # 75 passing
+.venv/bin/python -m pytest dipdector/tests -q          # 90 passing
 
 # rebuild the archive from history
 .venv/bin/python -m dipdector.backfill --start 2016-01-01 --step 5
@@ -183,6 +183,50 @@ separates an industry problem from a bad day for everything.
 
 Only after an industry clears all of that does the tool fetch news, work out
 the cause, and rank the companies that fell — largest first, with their scores.
+
+## How the cause analysis works
+
+Two model calls, because retrieval and judgement are different jobs.
+
+**Haiku searches.** It runs targeted queries anchored on the tickers, reads
+what comes back, and writes down what it found — attributed and dated. It is
+explicitly forbidden from scoring the event. Its output is evidence, not a
+verdict.
+
+**Opus judges.** It reads that digest alongside the computed statistics and
+decides what the evidence supports, returning JSON constrained by a schema so
+the answer cannot come back unparseable.
+
+The split is not about cost — this fires twice a year. It is that the search
+pass drags roughly 166k tokens of results through the context, and shrinking
+what reaches the judge to a few thousand is what makes the better judge
+affordable. The retrieved sources are listed in the report either way, so the
+judgement can be checked against what was actually found.
+
+**Search is disabled for historical replays.** Searching the web about a 2020
+crash returns pieces written afterwards, including ones that say how it
+resolved, and a backtest reading those measures hindsight rather than
+detection. `daily.py::is_live_alert` allows it only within 7 days of the
+event.
+
+## Checking it still works without waiting for a crash
+
+The scan runs daily and fails loudly, but the two things that only happen on
+an alerting day — sending mail, and calling the models — sit idle for months
+between events. An expired key or a blocked route would surface on the one day
+the tool exists for.
+
+**Actions → DipDector daily scan → Run workflow**, with either box ticked:
+
+| Input | What it proves |
+|---|---|
+| *Send an 'all quiet' note* | delivery works end to end, to your real inbox |
+| *Run the cause-analysis self-test* | the API key, the search pass and the judge all answer (a few cents) |
+
+The analysis self-test drives the real `classify_event` against a fixed
+synthetic shock and throws the verdict away — it stores, publishes and emails
+nothing, which is also why searching there is not a hindsight problem. Worth
+running every few months.
 
 ## What the numbers actually say
 
