@@ -135,12 +135,14 @@ working — it is unofficial and will eventually break.
 Ask the owner before starting any of these:
 - point-in-time index membership (removes survivorship bias — highest value)
 - fundamentals feed (unlocks 14 of 18 recovery inputs)
-- the 206 companies whose sub-industry has fewer than 5 S&P 500 members are
-  never scored, because a group that small cannot demonstrate breadth. The
-  fix is the GICS *industry* tier, between sub-industry and sector, which
-  Wikipedia does not publish. Grouping them by sector instead would mix
-  refiners with coal miners and manufacture false breadth — worse than the
-  gap.
+- 59 companies sit in industry groups of one or two members and so are never
+  scored: two names cannot demonstrate breadth and no p-value rescues that.
+  Measured on the live universe today — 70 of 111 groups clear the 3-member
+  floor, covering 443 of 502 companies (88%). This bullet previously said
+  *206 companies* against a *5-member* floor; that was true until 0.4.0
+  replaced the flat floor with the breadth significance test, and was left
+  uncorrected. Grouping the remainder by sector would mix refiners with coal
+  miners and manufacture false breadth — worse than the gap.
 
 **Done since the original brief:** the universe is no longer six hand-picked
 industries. `data/sp500.py` loads all 503 constituents with their GICS
