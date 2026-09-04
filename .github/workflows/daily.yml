@@ -16,6 +16,16 @@ on:
     # fine here, because daily bars do not change after the close.
     - cron: "45 21 * * 1-5"
   workflow_dispatch:        # lets you trigger a run by hand from the Actions tab
+    inputs:
+      test_email:
+        # A green run proves the scan works. It does NOT prove the mail can
+        # leave the building, because on a quiet day nothing is sent — and
+        # quiet is this job's normal state. Waiting for the 20-run heartbeat
+        # to find out is how you end up discovering a dead channel on the one
+        # day in six months it carried something.
+        description: "Send an 'all quiet' note now, to prove mail delivery works"
+        type: boolean
+        default: false
 
 concurrency:
   group: dipdector-daily
@@ -77,6 +87,12 @@ jobs:
           # https://<owner>.github.io/<repo>. This is what makes the links in
           # the email absolute and clickable.
           SITE_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          # Normally every 20th quiet run. Set to 1 by the test_email input,
+          # which turns the next quiet run into a delivery test — the note it
+          # sends is the same one the schedule sends, so passing it means the
+          # real path works, not a special-cased one. Empty on a scheduled
+          # run, hence the fallback.
+          HEARTBEAT_EVERY: ${{ inputs.test_email && '1' || '20' }}
         # Exit codes are meaningful here: 0 = nothing fired, 10 = alerts were
         # sent, anything else = a real failure. 10 is a success, so it must be
         # absorbed — otherwise every day the detector actually works would be
@@ -87,6 +103,7 @@ jobs:
           python -m dipdector.daily \
             --provider yfinance \
             --level INVESTIGATE \
+            --heartbeat-every "$HEARTBEAT_EVERY" \
             --state state/alert_state.json \
             --db state/dipdector.duckdb \
             --publish-dir docs
