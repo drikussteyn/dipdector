@@ -224,9 +224,18 @@
       "median_return": -0.2063225475742161,
       "path": "events/2026-07-07-semiconductor-equipment-and-materials.html",
       "score": 86.45402939853471
+    },
+    {
+      "as_of": "2026-10-15",
+      "headline": "Semiconductor Equipment & Materials fell 13.5% in 5 trading days",
+      "industry": "Semiconductor Equipment & Materials",
+      "level": "INVESTIGATE",
+      "median_return": -0.13453322117186395,
+      "path": "events/2026-10-15-semiconductor-equipment-and-materials.html",
+      "score": 64.88729649649687
     }
   ],
-  "last_run": "2026-10-14",
+  "last_run": "2026-10-15",
   "params_version": "0.7.0-fitted",
   "universe": 502
 }
