@@ -233,9 +233,18 @@
       "median_return": -0.13453322117186395,
       "path": "events/2026-10-15-semiconductor-equipment-and-materials.html",
       "score": 64.88729649649687
+    },
+    {
+      "as_of": "2026-10-16",
+      "headline": "Computer Hardware fell 18.3% in 5 trading days",
+      "industry": "Computer Hardware",
+      "level": "INVESTIGATE",
+      "median_return": -0.18344564343419756,
+      "path": "events/2026-10-16-computer-hardware.html",
+      "score": 59.651789224491125
     }
   ],
-  "last_run": "2026-10-15",
+  "last_run": "2026-10-16",
   "params_version": "0.7.0-fitted",
   "universe": 502
 }

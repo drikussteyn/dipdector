@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light only">
+<title>DipDector — 2026-10-16</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light only;
+  --paper:#F7F7F3; --panel:#ECECE6; --ink:#16181B; --muted:#565B62;
+  --rule:#D8D8D1; --rule-soft:#E4E4DD;
+  --judge-bg:#EAE7F0; --judge-ink:#2E2A3D; --judge-mark:#584C7A;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--paper)}
+body{margin:0;background:var(--paper)!important;color:var(--ink)!important;
+  font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:660px;margin:0 auto;padding:44px 22px 100px;background:var(--paper)}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+/* header */
+header.top{margin-bottom:52px}
+.brand{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted)}
+.status{font-family:'Newsreader',Georgia,serif;font-size:23px;font-weight:400;
+  line-height:1.35;margin:12px 0 0}
+
+/* event */
+.event{padding-top:34px;border-top:1px solid var(--rule);margin-top:44px;
+  background:var(--paper)}
+.event:first-of-type{border-top:none;margin-top:0;padding-top:0}
+.tag{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:500}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+h2.head{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:33px;
+  line-height:1.22;letter-spacing:-.012em;margin:14px 0 0}
+p.sub{color:var(--muted);font-size:16px;margin:12px 0 0;max-width:52ch}
+
+/* the suggestion — the one thing that should catch the eye */
+.suggest{margin:28px 0 0;padding:20px 22px;background:var(--panel);
+  border-left:3px solid var(--accent)}
+.suggest .act{font-family:'Newsreader',Georgia,serif;font-size:21px;
+  color:var(--accent);margin:0 0 8px;line-height:1.3}
+.suggest p{margin:0;font-size:15px;color:var(--ink);max-width:54ch}
+
+/* three figures */
+.figs{display:flex;flex-wrap:wrap;gap:30px;margin:30px 0 6px}
+.fig{min-width:104px}
+.fig b{display:block;font-family:'IBM Plex Mono',monospace;font-size:25px;
+  font-weight:500;letter-spacing:-.02em;line-height:1.1}
+.fig span{display:block;font-size:12.5px;color:var(--muted);margin-top:5px;
+  max-width:15ch;line-height:1.4}
+
+/* disclosure panels */
+details{border-top:1px solid var(--rule-soft);background:var(--paper)}
+.body{background:var(--paper)}
+details:last-of-type{border-bottom:1px solid var(--rule-soft)}
+summary{cursor:pointer;list-style:none;padding:15px 2px;font-size:15px;
+  display:flex;align-items:center;gap:11px;color:var(--ink)}
+summary::-webkit-details-marker{display:none}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+summary:hover{color:var(--accent)}
+.chev{flex:0 0 9px;height:9px;border-right:1.5px solid var(--muted);
+  border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);
+  transition:transform .18s ease;margin-left:2px}
+details[open] .chev{transform:rotate(45deg)}
+summary .n{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--muted)}
+.body{padding:2px 2px 26px;font-size:14.5px}
+.panels{margin-top:24px}
+figure.chart{margin:26px 0 4px;padding:0}
+figure.chart.tight{margin:22px 0 0}
+figure.chart figcaption{font-size:12.5px;color:var(--muted);margin-top:9px;
+  line-height:1.5;max-width:56ch}
+table.stats{margin-bottom:4px}
+table.stats td{vertical-align:top;padding:10px 8px 10px 0}
+table.stats td.k{font-weight:600;font-size:13.5px;white-space:nowrap}
+table.stats td.k .f{display:block;font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;color:var(--muted);font-weight:400;margin-top:3px}
+table.stats td.v{font-family:'IBM Plex Mono',monospace;font-size:15px;
+  text-align:right;white-space:nowrap;padding-right:14px}
+table.stats td.m{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* score bar, now inside a panel */
+.bar{display:flex;height:26px;border:1px solid var(--rule);margin:4px 0 12px}
+.seg{min-width:0}
+.unearned{flex:1;background-image:repeating-linear-gradient(135deg,
+  transparent 0 5px,var(--rule) 5px 6px)}
+.comp{display:flex;align-items:baseline;gap:10px;padding:9px 0;
+  border-bottom:1px solid var(--rule-soft)}
+.comp .sw{flex:0 0 9px;height:9px;margin-top:5px;border-radius:2px}
+.comp .txt{flex:1}
+.comp .nm{font-size:13.5px;font-weight:600}
+.comp .ex{color:var(--muted);font-size:13px;margin-top:2px}
+.comp .pts{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--muted)}
+
+.chk{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid var(--rule-soft);
+  align-items:baseline}
+.chk .m{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.09em;
+  flex:0 0 40px;font-weight:500}
+.chk.ok .m{color:#1E5C4F}.chk.no .m{color:#9E2B21}
+.chk .d{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+  text-align:left;font-weight:600;padding:0 6px 7px;border-bottom:1px solid var(--rule)}
+td{padding:8px 6px;border-bottom:1px solid var(--rule-soft)}
+td.num,th.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px}
+th.num{font-family:inherit}
+.tk{font-family:'IBM Plex Mono',monospace;font-weight:500}
+.dn{color:#9E2B21}
+
+/* judgement — different surface, always labelled */
+.judge{background:var(--judge-bg);color:var(--judge-ink);padding:20px 22px;
+  border-left:3px solid var(--judge-mark);margin:4px 0 12px}
+.judge .mark{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--judge-mark);margin-bottom:10px}
+.judge h3{font-family:'Newsreader',Georgia,serif;font-weight:400;font-size:20px;
+  margin:0 0 8px;line-height:1.3}
+.judge p{margin:0 0 12px;font-size:14.5px}
+.judge .chain{font-family:'IBM Plex Mono',monospace;font-size:13px;margin:0 0 14px}
+.jrow{display:flex;flex-wrap:wrap;gap:24px;margin-top:6px}
+.jrow div{font-family:'IBM Plex Mono',monospace}
+.jrow b{display:block;font-size:19px;font-weight:500}
+.jrow span{font-family:inherit;font-size:11.5px;letter-spacing:.05em;opacity:.85}
+.judge.empty{background:var(--panel);border-left-color:var(--rule);color:var(--muted)}
+.judge.empty .mark{color:var(--muted)}
+
+.cand{padding:13px 0;border-bottom:1px solid var(--rule-soft)}
+.cand .r{display:flex;align-items:baseline;gap:11px}
+.cand .r .i{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--muted);
+  flex:0 0 16px}
+.cand .r .t{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:15px}
+.cand .r .nm{color:var(--muted);font-size:14px;flex:1}
+.cand .r .cap{font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--muted)}
+.srcs{margin-top:18px;padding-top:14px;border-top:1px solid var(--rule-soft)}
+.srcs .srch{font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:8px}
+.srcs ul{margin:0;padding-left:18px}
+.srcs li{font-size:13.5px;margin-bottom:5px;line-height:1.45}
+.srcs a{color:var(--judge-mark);text-decoration:none}
+.srcs a:hover{text-decoration:underline}
+.cand .r .s{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:500}
+.cand .why{margin:5px 0 0 27px;font-size:13.5px;color:var(--muted)}
+.cand ul{margin:7px 0 0 27px;padding:0 0 0 15px;font-size:13px;color:var(--muted)}
+.cand li{margin-bottom:4px}
+.cand .cav{margin:6px 0 0 27px;font-size:13px;color:#9E2B21}
+
+ul.plain{margin:0;padding-left:17px;font-size:14px;color:var(--muted)}
+ul.plain li{margin-bottom:7px}
+.note{font-size:13.5px;color:var(--muted);margin:0 0 14px}
+
+.banner{margin:0 0 34px;padding:11px 14px;border:1px solid #9E2B21;color:#9E2B21;
+  font-size:13.5px}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--rule);
+  font-size:12.5px;color:var(--muted);line-height:1.75}
+@media (max-width:520px){
+  .wrap{padding:30px 16px 70px}h2.head{font-size:26px}.status{font-size:19px}
+  .figs{gap:22px}.fig b{font-size:21px}
+}
+@media (prefers-color-scheme:dark){
+  html,body,.wrap,.event,details,.body,summary{
+    background:var(--paper)!important;color:var(--ink)!important}
+  h2.head,.status{color:var(--ink)!important}
+  p.sub,.fig span,.note,summary .n,.comp .ex,.chk .d,ul.plain,footer,
+  .cand .why,.cand ul,.cand .r .nm,td,th{color:var(--muted)!important}
+  td,th,.comp .nm,.fig b{color:var(--ink)!important}
+  .judge{background:var(--judge-bg)!important;color:var(--judge-ink)!important}
+  .judge p,.judge h3,.judge .chain,.jrow{color:var(--judge-ink)!important}
+  .suggest{background:var(--panel)!important}
+  .suggest p{color:var(--ink)!important}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="wrap">
+
+<header class="top">
+  <div class="brand">DipDector &middot; 2026-10-16</div>
+  <p class="status">Computer Hardware moved far enough together to be worth a look.</p>
+</header>
+
+
+
+
+
+<section class="event" style="--accent:#86580A">
+
+  <span class="tag" style="color:#86580A">
+    <span class="dot" style="background:#86580A"></span>Investigate</span>
+
+  <h2 class="head">Computer Hardware fell 18.3% in 5 trading days</h2>
+  <p class="sub">Over the same window the S&amp;P 500 fell 1.9%. 6 of 7 companies in the group declined together. Slightly larger than this group&#39;s normal range of movement.</p>
+
+  <div class="suggest">
+    <p class="act">Find out what caused this</p>
+    <p>The group is falling together and falling behind the market, which points to a shared cause rather than coincidence. The next step is to identify the cause and judge whether it looks temporary.</p>
+  </div>
+
+  <div class="figs">
+    
+    <div class="fig" title="The middle company in the group. Half fell more, half fell less.">
+      <b style="color:#9E2B21">-18.3%</b>
+      <span>typical fall over 5 days</span></div>
+    
+    <div class="fig" title="How widespread the decline is. One or two weak names would not count as an industry event.">
+      <b>6/7</b>
+      <span>companies falling</span></div>
+    
+    <div class="fig" title="The gap between this group and the wider market. This is what separates an industry problem from a bad week for everything.">
+      <b style="color:#9E2B21">-16.4%</b>
+      <span>behind the S&amp;P 500</span></div>
+    
+  </div>
+
+  
+  <figure class="chart">
+    <svg viewBox="0 0 616 230" width="100%" role="img" aria-label="Cumulative return of the affected companies against the market over the last 60 trading days" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="456.3" y="14" width="41.7" height="190" fill="#E8E2DF"/><text x="460.3" y="25" font-size="9.5" fill="#565B62" font-family="IBM Plex Mono,monospace">5-day window</text><line x1="6" y1="129.6" x2="498" y2="129.6" stroke="#16181B" stroke-width="1" /><text x="504" y="133.1" font-size="10" fill="#565B62" font-family="IBM Plex Mono,monospace">+0%</text><line x1="6" y1="14.0" x2="498" y2="14.0" stroke="#D8D8D1" stroke-width="0.7" stroke-dasharray='2 3'/><text x="504" y="17.5" font-size="10" fill="#565B62" font-family="IBM Plex Mono,monospace">+22%</text><line x1="6" y1="204.0" x2="498" y2="204.0" stroke="#D8D8D1" stroke-width="0.7" stroke-dasharray='2 3'/><text x="504" y="207.5" font-size="10" fill="#565B62" font-family="IBM Plex Mono,monospace">-14%</text><polyline points="6.0,129.6 14.3,145.4 22.7,170.2 31.0,188.2 39.4,145.1 47.7,139.6 56.0,134.4 64.4,102.0 72.7,112.8 81.1,135.3 89.4,132.8 97.7,130.0 106.1,128.6 114.4,89.6 122.7,63.5 131.1,54.6 139.4,47.8 147.8,75.6 156.1,99.6 164.4,98.6 172.8,94.5 181.1,117.9 189.5,99.0 197.8,86.3 206.1,87.0 214.5,94.7 222.8,92.8 231.2,101.0 239.5,88.5 247.8,82.0 256.2,56.0 264.5,50.3 272.8,49.4 281.2,67.4 289.5,45.9 297.9,78.0 306.2,83.7 314.5,77.5 322.9,50.7 331.2,41.7 339.6,35.7 347.9,29.8 356.2,32.3 364.6,44.4 372.9,31.7 381.3,42.7 389.6,47.5 397.9,44.4 406.3,33.2 414.6,42.7 422.9,41.5 431.3,46.5 439.6,39.4 448.0,55.7 456.3,60.1 464.6,78.6 473.0,83.7 481.3,116.2 489.7,130.2 498.0,161.1" fill="none" stroke="#9E2B21" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="498.0" cy="161.1" r="2.6" fill="#9E2B21"/><polyline points="6.0,129.6 14.3,129.6 22.7,128.5 31.0,136.3 39.4,127.9 47.7,124.2 56.0,116.6 64.4,107.1 72.7,108.0 81.1,109.0 89.4,105.6 97.7,106.0 106.1,107.7 114.4,106.3 122.7,102.8 131.1,103.7 139.4,106.5 147.8,110.2 156.1,109.1 164.4,113.7 172.8,111.4 181.1,112.9 189.5,111.2 197.8,111.3 206.1,107.5 214.5,108.8 222.8,110.6 231.2,114.4 239.5,112.0 247.8,106.3 256.2,108.4 264.5,111.5 272.8,114.1 281.2,117.2 289.5,112.6 297.9,115.2 306.2,117.6 314.5,119.9 322.9,114.0 331.2,113.1 339.6,105.2 347.9,105.2 356.2,109.2 364.6,109.4 372.9,106.6 381.3,110.8 389.6,111.7 397.9,113.0 406.3,112.0 414.6,108.1 422.9,104.5 431.3,101.4 439.6,102.6 448.0,105.1 456.3,101.9 464.6,102.2 473.0,102.3 481.3,108.3 489.7,106.6 498.0,112.5" fill="none" stroke="#3B4A5C" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="498.0" cy="112.5" r="2" fill="#3B4A5C"/><rect x="6" y="219" width="10" height="2.5" fill="#9E2B21"/><text x="20" y="223" font-size="10.5" fill="#565B62">Affected companies <tspan fill="#9E2B21">-6.1%</tspan></text><rect x="181.8" y="219" width="10" height="2.5" fill="#3B4A5C"/><text x="195.8" y="223" font-size="10.5" fill="#565B62">S&amp;P 500 <tspan fill="#3B4A5C">+3.3%</tspan></text></svg>
+    <figcaption>How the affected companies moved against the market over the
+    last 60 trading days, rebased to zero. Shaded band is the
+    5-day detection window.</figcaption>
+  </figure>
+  
+
+  <div class="panels">
+
+  <details>
+    <summary><span class="chev"></span>Why this fired
+      <span class="n">60/100</span></summary>
+    <div class="body">
+      <p class="note">The score adds up seven separate signals. The hatched part
+      of the bar is what this event did <em>not</em> earn.</p>
+      <div class="bar">
+        
+        <div class="seg" style="flex:0 0 22.0%;background:#22384F"
+             title="magnitude — 22.0"></div>
+        
+        <div class="seg" style="flex:0 0 12.285714285714283%;background:#43738A"
+             title="breadth — 12.3"></div>
+        
+        <div class="seg" style="flex:0 0 19.814645206789088%;background:#33556E"
+             title="relative weakness — 19.8"></div>
+        
+        <div class="seg" style="flex:0 0 5.551429731987753%;background:#57909B"
+             title="abnormality — 5.6"></div>
+        
+        <div class="unearned"></div>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#22384F"></span>
+        <span class="txt"><span class="nm">Magnitude</span>
+          <span class="ex">Industry median 5-day return is -18.3%. Scales from 0 at -3% to 100 at -15%.</span></span>
+        <span class="pts">22.0</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#33556E"></span>
+        <span class="txt"><span class="nm">Relative weakness</span>
+          <span class="ex">This group normally moves 3.17x the market (R² 0.25). With the S&amp;P 500 at -1.9%, a fall of -6.2% would be ordinary. It actually fell -18.3%, leaving -11.9% the market cannot account for. That residual, not the raw gap, is what distinguishes an industry shock from a broad sell-off in a high-beta group.</span></span>
+        <span class="pts">19.8</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#43738A"></span>
+        <span class="txt"><span class="nm">Breadth</span>
+          <span class="ex">6 of 7 members (86%) are down at least 10%. The bar is a supermajority: a fixed count like &#39;three companies&#39; means something very different in a 5-member group than a 20-member one.</span></span>
+        <span class="pts">12.3</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#57909B"></span>
+        <span class="txt"><span class="nm">Abnormality</span>
+          <span class="ex">The move is 1.9 standard deviations below this industry&#39;s own distribution of 5-day returns over the past year. A volatile industry has to move further to look abnormal.</span></span>
+        <span class="pts">5.6</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#7BAFAC"></span>
+        <span class="txt"><span class="nm">Correlation</span>
+          <span class="ex">Mean pairwise correlation of daily returns across members is 0.30. High correlation means they are falling together, which points to a shared cause rather than coincidence.</span></span>
+        <span class="pts">0.0</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#A5C9BE"></span>
+        <span class="txt"><span class="nm">Volume</span>
+          <span class="ex">Median volume z-score is +0.0 against the trailing 60-day mean. Conviction selling usually shows up as volume.</span></span>
+        <span class="pts">0.0</span>
+      </div>
+      
+      <div class="comp">
+        <span class="sw" style="background:#C9DCD1"></span>
+        <span class="txt"><span class="nm">Benchmark confirmation</span>
+          <span class="ex">No industry benchmark reading, so this component contributes nothing. It is not counted as confirmation either way — absence of evidence is not evidence.</span></span>
+        <span class="pts">0.0</span>
+      </div>
+      
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>Conditions this had to meet
+      <span class="n">5/5</span></summary>
+    <div class="body">
+      <p class="note">A high score alone is not an event. These conditions gate
+      anything stronger than a watch.</p>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>At least 80% of the industry declining<span class="d">6 of 7 (86%) at or below -10% (need 80%).</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>At least 3 companies declining<span class="d">6 declining. A backstop only — one or two names cannot show anything however improbable the arithmetic looks.</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>Industry median 5d return at or below -12%<span class="d">Median is -18.3%.</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>At least 60% underperforming the S&amp;P 500 by 5%+<span class="d">6 of 7 (86%) qualify — need 60% and at least 3.</span></span>
+      </div>
+      
+      <div class="chk ok">
+        <span class="m">MET</span>
+        <span>Move is abnormal vs the industry&#39;s own volatility<span class="d">1.9 sigma (need 1.5).</span></span>
+      </div>
+      
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>What caused it
+      <span class="n">inflation, interest-rate shock, other, geopolitical conflict</span></summary>
+    <div class="body">
+      <div class="judge">
+        <div class="mark">AI judgement — not a measurement</div>
+        
+          <h3>AI hardware de-rating on hot CPI, Barclays downgrades, and AI-financing/memory-pricing doubts</h3>
+          <div class="chain">Hotter-than-expected September CPI (3.7% headline, firm core) -&gt; bond yields rise and Fed rate-cut hopes fade -&gt; long-duration, high-multiple AI hardware names de-rate -&gt; Barclays downgrades Dell/HPE/NetApp arguing recent server revenue growth is inflated by memory-price pass-through rather than a true enterprise AI inflection -&gt; investors question AI data-center financing and the quality of hardware revenue -&gt; broad, correlated multiple compression across servers, storage and memory-linked hardware, amplified at SMCI by idiosyncratic governance/CFO history and Taiwan&#39;s proposed AI-server export controls</div>
+          <p>The window&#39;s decline is well explained by two reinforcing catalysts: a hot September CPI print (3.7%) that lifted yields and revived rate-hike fears, hitting AI-linked hardware hardest [12][14][18][42][79], and a Barclays downgrade of Dell/HPE/NetApp arguing that server revenue strength reflects memory-price pass-through rather than a genuine enterprise AI inflection [23][67][75]. This is primarily a valuation/multiple event after enormous runs (HPE +134% YTD, Dell&#39;s 271% run, Micron ~+398% over a year) rather than evidence of demand collapse — Dell reported record AI backlog and its CEO warned of a multi-year memory shortage [35][59][73][74][75]. The structural question that keeps risk elevated is real and unresolved: if revenue growth is price-driven, normalization of memory pricing compresses both revenue and margins, and the &#34;who pays for the buildout&#34; financing debate has no near-term resolution [23][67][36]. SMCI&#39;s -24.4% carries company-specific overlay (long-delayed CFO replacement after an accounting review and auditor resignation, plus Taiwan&#39;s proposed criminalization of AI-server exports to China) [25][34][53][64][81]. Breadth (6 of 7) and 1.9-sigma abnormality with only average volume suggest a sentiment-driven de-rating rather than a confirmed fundamental break, but the narrative shift from &#34;demand story&#34; to &#34;revenue quality and financing&#34; can persist well past 12 months.</p>
+          <div class="jrow">
+            <div><b>45</b><span>Severity</span></div>
+            <div><b>58</b><span>Looks temporary</span></div>
+            <div><b>45</b><span>Structural risk</span></div>
+            <div><b>60</b><span>Could fall further</span></div>
+          </div>
+          
+      <div class="srcs">
+        <div class="srch">Sources the analysis retrieved
+          (45)</div>
+        <ul>
+          <li><a href="https://finance.yahoo.com/markets/stocks/articles/hewlett-packard-enterprise-falls-5-154222024.html" rel="noopener noreferrer"
+                 target="_blank">Hewlett Packard Enterprise Falls 5% as AI Financing Worries Extend Hardware Selloff; Super Micro Sinks 7%, Dell Drops 3%</a></li>
+          <li><a href="https://finance.yahoo.com/markets/stocks/articles/super-micro-22-2026-down-190731752.html" rel="noopener noreferrer"
+                 target="_blank">Super Micro Is Up 22% in 2026 but It’s Down Today: Take Profits, or Hold On for the Ride?</a></li>
+          <li><a href="https://finance.yahoo.com/markets/stocks/articles/dell-falls-8-hewlett-packard-133834487.html" rel="noopener noreferrer"
+                 target="_blank">Dell Falls 8%, Hewlett Packard Enterprise Drops 4% as Barclays Cuts Both to Hold; Super Micro Slides 5%</a></li>
+          <li><a href="https://finance.yahoo.com/markets/stocks/articles/super-micro-drops-3-profit-140127784.html" rel="noopener noreferrer"
+                 target="_blank">Super Micro Drops 3% as Profit Taking Unwinds Server Rally; Dell and Hewlett Packard Enterprise Dip</a></li>
+          <li><a href="https://247wallst.com/investing/2026/10/08/super-micro-drops-3-as-profit-taking-unwinds-server-rally-dell-and-hewlett-packard-enterprise-dip/" rel="noopener noreferrer"
+                 target="_blank">Super Micro Drops 3% as Profit Taking Unwinds Server Rally; Dell and Hewlett Packard Enterprise Dip - 24/7 Wall St.</a></li>
+          <li><a href="https://247wallst.com/investing/2026/10/14/dell-falls-8-as-barclays-cuts-rating-and-target-to-574-hewlett-packard-enterprise-drops-5-super-micro-computer-slides-4/" rel="noopener noreferrer"
+                 target="_blank">Dell Falls 8% as Barclays Cuts Rating and Target to $574; Hewlett Packard Enterprise Drops 5%, Super Micro Computer Slides 4% - 24/7 Wall St.</a></li>
+          <li><a href="https://247wallst.com/investing/2026/10/15/dell-falls-8-hewlett-packard-enterprise-drops-4-as-barclays-cuts-both-to-hold-super-micro-slides-5/" rel="noopener noreferrer"
+                 target="_blank">Dell Falls 8%, Hewlett Packard Enterprise Drops 4% as Barclays Cuts Both to Hold; Super Micro Slides 5% - 24/7 Wall St.</a></li>
+          <li><a href="https://www.fxleaders.com/news/2026/10/14/dell-and-hpe-stock-dive-as-downgrades-expose-ai-infrastructure-risks/" rel="noopener noreferrer"
+                 target="_blank">Dell and HPE Stock Dive as Downgrades Expose AI Infrastructure Risks - Forex News by FX Leaders</a></li>
+          <li><a href="https://247wallst.com/investing/2026/10/16/hewlett-packard-enterprise-falls-5-as-ai-financing-worries-extend-hardware-selloff-super-micro-sinks-7-dell-drops-3/" rel="noopener noreferrer"
+                 target="_blank">Hewlett Packard Enterprise Falls 5% as AI Financing Worries Extend Hardware Selloff; Super Micro Sinks 7%, Dell Drops 3% - 24/7 Wall St.</a></li>
+          <li><a href="https://www.fxleaders.com/news/2026/10/14/dell-stock-and-hpe-dive-as-downgrades-expose-ai-infrastructure-risks/" rel="noopener noreferrer"
+                 target="_blank">Dell Stock and HPE Dive as Downgrades Expose AI Infrastructure Risks - Forex News by FX Leaders</a></li>
+          <li><a href="https://finance.yahoo.com/markets/stocks/articles/dell-stock-nosedives-barclays-downgrade-191620506.html" rel="noopener noreferrer"
+                 target="_blank">Dell Stock Nosedives After Barclays Downgrade</a></li>
+          <li><a href="https://finance.yahoo.com/markets/stocks/articles/dell-stock-tumbles-8-day-222519138.html" rel="noopener noreferrer"
+                 target="_blank">Dell stock price tumbles 6.8% after epic 271% run</a></li></ul>
+      </div>
+      
+      
+          <p style="margin:16px 0 0"><b>Couldn't determine:</b>
+            Whether enterprise AI server demand volumes (as opposed to ASPs) are actually decelerating — no evidence of order cancellations appeared in the articles; How much of Dell/HPE/SMCI revenue growth is memory-price pass-through versus unit growth; no company-level disclosure in the evidence; Whether the Fed will in fact raise rates, or whether the CPI print was a one-off driven by energy [12]; Scope and timing of Taiwan&#39;s proposed AI-server export controls and the China revenue exposure of affected hardware makers [41][64]; Why HPQ (-0.6%) decoupled so sharply from the rest of the group — likely low AI exposure, but not confirmed in the articles; Whether the Toshiba/HDD competitive supply threat to Seagate and Western Digital is a durable share shift or a sentiment overhang [7][19][69][77]</p>
+          
+        
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>Market statistics
+      <span class="n">β 3.17</span></summary>
+    <div class="body">
+      <table class="stats"><tbody>
+      
+      <tr><td class="k">Beta<span class="f">β = Cov(r_i, r_m) / Var(r_m)</span></td>
+          <td class="v">3.17</td>
+          <td class="m">How much this group normally moves for a given market move, measured over the year before this window. Above 1 means it amplifies the market.</td></tr>
+      
+      <tr><td class="k">R-squared<span class="f">R² = ρ²(r_i, r_m)</span></td>
+          <td class="v">0.25</td>
+          <td class="m">The market explains 25% of this group&#39;s normal day-to-day movement. The rest is industry-specific.</td></tr>
+      
+      <tr><td class="k">Expected return<span class="f">E[r_i] = β × r_m</span></td>
+          <td class="v">-6.2%</td>
+          <td class="m">Given the S&amp;P 500 at -1.9%, this is the fall that would have been unremarkable.</td></tr>
+      
+      <tr><td class="k">Alpha<span class="f">α = r_i − β × r_m</span></td>
+          <td class="v">-11.9%</td>
+          <td class="m">The part of the fall the market cannot account for. This is the actual signal — the raw gap against the index flatters any high-beta group.</td></tr>
+      
+      <tr><td class="k">Abnormality<span class="f">z = (r − μ) / σ</span></td>
+          <td class="v">1.9σ</td>
+          <td class="m">Standard deviations below this group&#39;s own average 5-day return over the past year. Scales the move by how volatile the group already was.</td></tr>
+      
+      <tr><td class="k">Mean correlation<span class="f">ρ̄ = mean ρ(r_a, r_b), all pairs</span></td>
+          <td class="v">0.30</td>
+          <td class="m">How closely members moved together. High correlation is the signature of one shared cause rather than several coincidences.</td></tr>
+      
+      <tr><td class="k">Dispersion<span class="f">σ of member returns</span></td>
+          <td class="v">7.2%</td>
+          <td class="m">Spread of individual outcomes. Low dispersion means the event hit everyone about equally.</td></tr>
+      
+      <tr><td class="k">Breadth<span class="f">n declining / n members</span></td>
+          <td class="v">86%</td>
+          <td class="m">6 of 7 members fell at least 3%. The trigger requires a supermajority, not a fixed count.</td></tr>
+      
+      <tr><td class="k">Volume anomaly<span class="f">z = (V − μ₆₀) / σ₆₀</span></td>
+          <td class="v">+0.0σ</td>
+          <td class="m">Median volume against its 60-day norm. Conviction selling shows up as volume; a drift on thin volume does not.</td></tr>
+      
+      </tbody></table>
+      
+      <figure class="chart tight"><svg viewBox="0 0 616 181" width="100%" role="img" aria-label="Return of each company over the 5-day window" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="73.6" y="8.0" width="442.6" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="18.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">SMCI</text><text x="568" y="18.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-24.4%</text><rect x="101.1" y="29.0" width="415.2" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="39.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">DELL</text><text x="568" y="39.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-22.9%</text><rect x="183.2" y="50.0" width="333.0" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="60.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">STX</text><text x="568" y="60.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-18.4%</text><rect x="184.0" y="71.0" width="332.2" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="81.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">ANET</text><text x="568" y="81.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-18.3%</text><rect x="192.8" y="92.0" width="323.5" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="102.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">SNDK</text><text x="568" y="102.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-17.9%</text><rect x="218.7" y="113.0" width="297.6" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="123.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">WDC</text><text x="568" y="123.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-16.4%</text><rect x="504.9" y="134.0" width="11.4" height="14" fill="#9E2B21" fill-opacity="0.85"/><text x="0" y="144.0" font-size="11" fill="#16181B" font-family="IBM Plex Mono,monospace">HPQ</text><text x="568" y="144.0" font-size="11" fill="#565B62" font-family="IBM Plex Mono,monospace">-0.6%</text><line x1="516.2" y1="4" x2="516.2" y2="155.0" stroke="#16181B" stroke-width="1"/><line x1="481.0" y1="4" x2="481.0" y2="155.0" stroke="#3B4A5C" stroke-width="1.3" stroke-dasharray="3 3"/><text x="477.0" y="169.0" font-size="10" fill="#3B4A5C" text-anchor="end">S&amp;P 500 -1.9%</text><line x1="184.0" y1="4" x2="184.0" y2="155.0" stroke="#16181B" stroke-width="1.3" stroke-dasharray="3 3"/><text x="188.0" y="169.0" font-size="10" fill="#16181B" text-anchor="start">median -18.3%</text></svg>
+        <figcaption>Every member's return over the window. A tight cluster
+        points to one shared cause; a long tail means several different stories
+        are being averaged together.</figcaption></figure>
+      
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="chev"></span>The companies
+      <span class="n">7</span></summary>
+    <div class="body">
+      <table><thead><tr><th>Ticker</th><th>Company</th>
+        <th class="num">5d</th><th class="num">vs S&amp;P</th>
+        <th class="num">Volume</th><th class="num">Off high</th></tr></thead><tbody>
+      
+      <tr><td class="tk">SMCI</td><td>SUPER MICRO COMPUTER INC</td>
+        <td class="num dn">-24.4%</td>
+        <td class="num">-22.5%</td>
+        <td class="num">+0.0σ</td>
+        <td class="num">-43%</td>
+      </tr>
+      <tr><td class="tk">DELL</td><td>DELL TECHNOLOGIES  C</td>
+        <td class="num dn">-22.9%</td>
+        <td class="num">-21.0%</td>
+        <td class="num">+0.1σ</td>
+        <td class="num">-23%</td>
+      </tr>
+      <tr><td class="tk">STX</td><td>SEAGATE TECHNOLOGY HOLDINGS</td>
+        <td class="num dn">-18.4%</td>
+        <td class="num">-16.4%</td>
+        <td class="num">+0.8σ</td>
+        <td class="num">-42%</td>
+      </tr>
+      <tr><td class="tk">ANET</td><td>ARISTA NETWORKS INC</td>
+        <td class="num dn">-18.3%</td>
+        <td class="num">-16.4%</td>
+        <td class="num">+0.3σ</td>
+        <td class="num">-18%</td>
+      </tr>
+      <tr><td class="tk">SNDK</td><td>SANDISK CORP</td>
+        <td class="num dn">-17.9%</td>
+        <td class="num">-15.9%</td>
+        <td class="num">-0.6σ</td>
+        <td class="num">-44%</td>
+      </tr>
+      <tr><td class="tk">WDC</td><td>WESTERN DIGITAL CORP</td>
+        <td class="num dn">-16.4%</td>
+        <td class="num">-14.5%</td>
+        <td class="num">+0.0σ</td>
+        <td class="num">-55%</td>
+      </tr>
+      <tr><td class="tk">HPQ</td><td>HP INC</td>
+        <td class="num dn">-0.6%</td>
+        <td class="num">+1.3%</td>
+        <td class="num">-0.3σ</td>
+        <td class="num">-15%</td>
+      </tr>
+      </tbody></table>
+    </div>
+  </details>
+
+  
+  <details>
+    <summary><span class="chev"></span>If this turns out to be temporary
+      <span class="n">6 ranked</span></summary>
+    <div class="body">
+      <p class="note">Which of these companies looks best placed to recover — <em>if</em>
+      the cause turns out to be temporary. That condition is doing a lot of work,
+      and this ranking cannot tell you whether it holds. Only
+      30% of the intended inputs are running;
+      the rest need a fundamentals feed.</p>
+      
+      <div class="cand">
+        <div class="r"><span class="i">1</span>
+          <span class="t">ANET</span><span class="nm">ARISTA NETWORKS INC</span>
+          <span class="cap">$241B</span>
+          <span class="s">67</span></div>
+        <div class="why">Scored mainly on how steady it usually is compared to its peers.</div>
+        <ul>
+          <li>Trailing volatility is 0.67x the industry median (50% annualised).</li>
+          <li>Moved in line with the industry (+0.0% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>After its three worst prior 5-day declines, it returned +15.4% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>18% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>Market capitalisation is 1.3x the industry median ($241bn). Size is not quality, but a larger balance sheet is more likely to outlast an industry-wide downturn than a smaller one.</li>
+          <li>Traded 0.3x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">2</span>
+          <span class="t">DELL</span><span class="nm">DELL TECHNOLOGIES  C</span>
+          <span class="cap">$333B</span>
+          <span class="s">64</span></div>
+        <div class="why">Scored mainly on how it behaved after past falls of this size.</div>
+        <ul>
+          <li>After its three worst prior 5-day declines, it returned +18.5% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Moved in line with the industry (-4.6% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>23% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>Trailing volatility is 1.05x the industry median (79% annualised).</li>
+          <li>Market capitalisation is 1.8x the industry median ($333bn). Size is not quality, but a larger balance sheet is more likely to outlast an industry-wide downturn than a smaller one.</li>
+          <li>Traded 1.1x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">3</span>
+          <span class="t">HPQ</span><span class="nm">HP INC</span>
+          <span class="cap">$29B</span>
+          <span class="s">64</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Held up 17.7% better than the industry median, suggesting lower exposure to the event.</li>
+          <li>Trailing volatility is 0.71x the industry median (53% annualised).</li>
+          <li>15% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>After its three worst prior 5-day declines, it returned +1.2% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Market capitalisation is 0.2x the industry median ($29bn). Size is not quality, but a larger balance sheet is more likely to outlast an industry-wide downturn than a smaller one.</li>
+          <li>Traded 0.1x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">4</span>
+          <span class="t">STX</span><span class="nm">SEAGATE TECHNOLOGY HOLDINGS</span>
+          <span class="cap">$181B</span>
+          <span class="s">54</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (-0.0% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>Trailing volatility is 0.96x the industry median (71% annualised).</li>
+          <li>After its three worst prior 5-day declines, it returned +8.0% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Traded 1.0x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li>
+          <li>Market capitalisation is 1.0x the industry median ($181bn). Size is not quality, but a larger balance sheet is more likely to outlast an industry-wide downturn than a smaller one.</li>
+          <li>42% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">5</span>
+          <span class="t">SNDK</span><span class="nm">SANDISK CORP</span>
+          <span class="cap">$228B</span>
+          <span class="s">53</span></div>
+        <div class="why">Scored mainly on how it behaved after past falls of this size.</div>
+        <ul>
+          <li>After its three worst prior 5-day declines, it returned +17.0% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Moved in line with the industry (+0.5% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>Traded 3.6x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li>
+          <li>Market capitalisation is 1.3x the industry median ($228bn). Size is not quality, but a larger balance sheet is more likely to outlast an industry-wide downturn than a smaller one.</li>
+          <li>44% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li>
+          <li>Trailing volatility is 1.41x the industry median (105% annualised).</li></ul>
+        
+      </div>
+      
+      <div class="cand">
+        <div class="r"><span class="i">6</span>
+          <span class="t">WDC</span><span class="nm">WESTERN DIGITAL CORP</span>
+          <span class="cap">$159B</span>
+          <span class="s">48</span></div>
+        <div class="why">Scored mainly on how much of the industry&#39;s fall it took on.</div>
+        <ul>
+          <li>Moved in line with the industry (+1.9% vs median), consistent with a shared cause rather than a company issue.</li>
+          <li>After its three worst prior 5-day declines, it returned +7.6% on average over the next 15 trading days. Small sample — indicative only.</li>
+          <li>Trailing volatility is 1.00x the industry median (75% annualised).</li>
+          <li>Traded 1.0x the industry median dollar volume. Liquid names tend to re-rate first when sentiment turns.</li>
+          <li>Market capitalisation is 0.9x the industry median ($159bn). Size is not quality, but a larger balance sheet is more likely to outlast an industry-wide downturn than a smaller one.</li>
+          <li>55% below its 52-week high. Deep drawdowns leave more room to recover but also signal the market has been repricing this name for a while.</li></ul>
+        
+      </div>
+      
+    </div>
+  </details>
+  
+
+  
+  <details>
+    <summary><span class="chev"></span>Limits of this reading
+      <span class="n">3</span></summary>
+    <div class="body"><ul class="plain">
+      <li>Devlog s.6.4 requires industry ETF confirmation. No benchmark reading was available, so that condition is skipped rather than passed, and this alert rests on one fewer piece of evidence than a full trigger would.</li><li>No industry ETF is mapped for this group, so the s.6.4 benchmark confirmation condition is skipped rather than passed.</li><li>Sparse price history for: SNDK</li></ul></div>
+  </details>
+  
+
+  </div>
+</section>
+
+
+<footer>
+Source: yfinance &middot;
+parameters 0.7.0-fitted, not yet validated by backtesting &middot;
+generated 2026-10-16 23:53 UTC<br>
+Research output. Scores are model estimates, not predictions. A detected shock is
+not a reason to buy anything.
+</footer>
+</div></body></html>
