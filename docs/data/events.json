@@ -278,9 +278,18 @@
       "median_return": -0.17864958253474383,
       "path": "events/2026-11-06-electronic-components.html",
       "score": 70.76278470568843
+    },
+    {
+      "as_of": "2026-11-23",
+      "headline": "Healthcare Plans fell 15.1% in 5 trading days",
+      "industry": "Healthcare Plans",
+      "level": "INVESTIGATE",
+      "median_return": -0.15133061880003285,
+      "path": "events/2026-11-23-healthcare-plans.html",
+      "score": 72.98778435951301
     }
   ],
-  "last_run": "2026-11-20",
+  "last_run": "2026-11-23",
   "params_version": "0.7.0-fitted",
   "universe": 502
 }
